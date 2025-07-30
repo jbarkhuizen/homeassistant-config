@@ -1,0 +1,503 @@
+# customize.yaml - Complete 24 Port Device Mapping Template
+# Replace "Unknown Device" with actual device names once identified
+
+# ==============================================================================
+# SWITCH PORT BANDWIDTH SENSORS - CUSTOMIZE FRIENDLY NAMES
+# ==============================================================================
+
+# PORT 1 SENSORS
+sensor.port_1_download_speed:
+  friendly_name: "Port 1 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+  entity_picture: null
+sensor.port_1_upload_speed:
+  friendly_name: "Port 1 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+  entity_picture: null
+sensor.switch_port_1_bytes_in:
+  friendly_name: "Port 1 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_1_bytes_out:
+  friendly_name: "Port 1 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 2 SENSORS
+sensor.port_2_download_speed:
+  friendly_name: "Port 2 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_2_upload_speed:
+  friendly_name: "Port 2 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_2_bytes_in:
+  friendly_name: "Port 2 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_2_bytes_out:
+  friendly_name: "Port 2 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 3 SENSORS
+sensor.port_3_download_speed:
+  friendly_name: "Port 3 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_3_upload_speed:
+  friendly_name: "Port 3 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_3_bytes_in:
+  friendly_name: "Port 3 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_3_bytes_out:
+  friendly_name: "Port 3 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 4 SENSORS
+sensor.port_4_download_speed:
+  friendly_name: "Port 4 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_4_upload_speed:
+  friendly_name: "Port 4 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_4_bytes_in:
+  friendly_name: "Port 4 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_4_bytes_out:
+  friendly_name: "Port 4 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 5 SENSORS
+sensor.port_5_download_speed:
+  friendly_name: "Port 5 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_5_upload_speed:
+  friendly_name: "Port 5 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_5_bytes_in:
+  friendly_name: "Port 5 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_5_bytes_out:
+  friendly_name: "Port 5 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 6 SENSORS
+sensor.port_6_download_speed:
+  friendly_name: "Port 6 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_6_upload_speed:
+  friendly_name: "Port 6 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_6_bytes_in:
+  friendly_name: "Port 6 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_6_bytes_out:
+  friendly_name: "Port 6 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 7 SENSORS
+sensor.port_7_download_speed:
+  friendly_name: "Port 7 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_7_upload_speed:
+  friendly_name: "Port 7 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_7_bytes_in:
+  friendly_name: "Port 7 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_7_bytes_out:
+  friendly_name: "Port 7 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 8 SENSORS
+sensor.port_8_download_speed:
+  friendly_name: "Port 8 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_8_upload_speed:
+  friendly_name: "Port 8 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_8_bytes_in:
+  friendly_name: "Port 8 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_8_bytes_out:
+  friendly_name: "Port 8 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 9 SENSORS
+sensor.port_9_download_speed:
+  friendly_name: "Port 9 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_9_upload_speed:
+  friendly_name: "Port 9 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_9_bytes_in:
+  friendly_name: "Port 9 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_9_bytes_out:
+  friendly_name: "Port 9 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 10 SENSORS
+sensor.port_10_download_speed:
+  friendly_name: "Port 10 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_10_upload_speed:
+  friendly_name: "Port 10 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_10_bytes_in:
+  friendly_name: "Port 10 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_10_bytes_out:
+  friendly_name: "Port 10 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 11 SENSORS
+sensor.port_11_download_speed:
+  friendly_name: "Port 11 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_11_upload_speed:
+  friendly_name: "Port 11 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_11_bytes_in:
+  friendly_name: "Port 11 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_11_bytes_out:
+  friendly_name: "Port 11 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 12 SENSORS
+sensor.port_12_download_speed:
+  friendly_name: "Port 12 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_12_upload_speed:
+  friendly_name: "Port 12 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_12_bytes_in:
+  friendly_name: "Port 12 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_12_bytes_out:
+  friendly_name: "Port 12 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 13 SENSORS
+sensor.port_13_download_speed:
+  friendly_name: "Port 13 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_13_upload_speed:
+  friendly_name: "Port 13 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_13_bytes_in:
+  friendly_name: "Port 13 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_13_bytes_out:
+  friendly_name: "Port 13 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 14 SENSORS
+sensor.port_14_download_speed:
+  friendly_name: "Port 14 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_14_upload_speed:
+  friendly_name: "Port 14 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_14_bytes_in:
+  friendly_name: "Port 14 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_14_bytes_out:
+  friendly_name: "Port 14 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 15 SENSORS
+sensor.port_15_download_speed:
+  friendly_name: "Port 15 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_15_upload_speed:
+  friendly_name: "Port 15 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_15_bytes_in:
+  friendly_name: "Port 15 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_15_bytes_out:
+  friendly_name: "Port 15 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 16 SENSORS
+sensor.port_16_download_speed:
+  friendly_name: "Port 16 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_16_upload_speed:
+  friendly_name: "Port 16 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_16_bytes_in:
+  friendly_name: "Port 16 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_16_bytes_out:
+  friendly_name: "Port 16 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 17 SENSORS
+sensor.port_17_download_speed:
+  friendly_name: "Port 17 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_17_upload_speed:
+  friendly_name: "Port 17 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_17_bytes_in:
+  friendly_name: "Port 17 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_17_bytes_out:
+  friendly_name: "Port 17 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 18 SENSORS
+sensor.port_18_download_speed:
+  friendly_name: "Port 18 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_18_upload_speed:
+  friendly_name: "Port 18 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_18_bytes_in:
+  friendly_name: "Port 18 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_18_bytes_out:
+  friendly_name: "Port 18 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 19 SENSORS
+sensor.port_19_download_speed:
+  friendly_name: "Port 19 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_19_upload_speed:
+  friendly_name: "Port 19 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_19_bytes_in:
+  friendly_name: "Port 19 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_19_bytes_out:
+  friendly_name: "Port 19 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 20 SENSORS
+sensor.port_20_download_speed:
+  friendly_name: "Port 20 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_20_upload_speed:
+  friendly_name: "Port 20 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_20_bytes_in:
+  friendly_name: "Port 20 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_20_bytes_out:
+  friendly_name: "Port 20 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 21 SENSORS
+sensor.port_21_download_speed:
+  friendly_name: "Port 21 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_21_upload_speed:
+  friendly_name: "Port 21 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_21_bytes_in:
+  friendly_name: "Port 21 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_21_bytes_out:
+  friendly_name: "Port 21 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 22 SENSORS
+sensor.port_22_download_speed:
+  friendly_name: "Port 22 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_22_upload_speed:
+  friendly_name: "Port 22 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_22_bytes_in:
+  friendly_name: "Port 22 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_22_bytes_out:
+  friendly_name: "Port 22 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 23 SENSORS
+sensor.port_23_download_speed:
+  friendly_name: "Port 23 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_23_upload_speed:
+  friendly_name: "Port 23 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_23_bytes_in:
+  friendly_name: "Port 23 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_23_bytes_out:
+  friendly_name: "Port 23 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# PORT 24 SENSORS
+sensor.port_24_download_speed:
+  friendly_name: "Port 24 - Unknown Device Download"
+  device_class: data_rate
+  icon: mdi:download-network
+sensor.port_24_upload_speed:
+  friendly_name: "Port 24 - Unknown Device Upload"
+  device_class: data_rate
+  icon: mdi:upload-network
+sensor.switch_port_24_bytes_in:
+  friendly_name: "Port 24 - Total Bytes Received"
+  device_class: data_size
+  icon: mdi:counter
+sensor.switch_port_24_bytes_out:
+  friendly_name: "Port 24 - Total Bytes Sent"
+  device_class: data_size
+  icon: mdi:counter
+
+# ==============================================================================
+# SWITCH INFRASTRUCTURE SENSORS
+# ==============================================================================
+
+sensor.switch_system_info:
+  friendly_name: "Netgear Switch System Information"
+  icon: mdi:information-outline
+
+sensor.switch_interface_count:
+  friendly_name: "Netgear Switch Port Count"
+  icon: mdi:ethernet
+
+sensor.switch_uptime:
+  friendly_name: "Netgear Switch Uptime"
+  icon: mdi:clock-outline
+
+# Network Summary Sensors
+sensor.total_network_download:
+  friendly_name: "Total Network Download Speed"
+  device_class: data_rate
+  icon: mdi:download-network-outline
+
+sensor.total_network_upload:
+  friendly_name: "Total Network Upload Speed"
+  device_class: data_rate
+  icon: mdi:upload-network-outline
+
+# ==============================================================================
+# ICON REFERENCE FOR DEVICE IDENTIFICATION
+# ==============================================================================
+#
+# Once you identify devices, update icons using these common ones:
+#
+# Routers/Switches:     mdi:router-network, mdi:router, mdi:switch
+# TVs/Streaming:        mdi:television, mdi:cast, mdi:netflix
+# Cameras:              mdi:cctv, mdi:camera, mdi:security
+# Computers:            mdi:desktop-tower, mdi:laptop, mdi:server
+# Gaming:               mdi:gamepad-variant, mdi:xbox, mdi:playstation
+# Smart Home:           mdi:home-automation, mdi:lightbulb, mdi:speaker
+# Access Points:        mdi:access-point-network, mdi:wifi
+# Printers:             mdi:printer, mdi:printer-3d
+# Storage:              mdi:nas, mdi:harddisk, mdi:server-network
+# Mobile Devices:       mdi:tablet, mdi:cellphone, mdi:phone
+#
+# ==============================================================================
+
+# EXAMPLE OF CUSTOMIZED DEVICE AFTER IDENTIFICATION:
+# 
+# sensor.port_1_download_speed:
+#   friendly_name: "Main Router Download"
+#   device_class: data_rate
+#   icon: mdi:router-network
+# 
+# sensor.port_5_download_speed:
+#   friendly_name: "Living Room TV Download"
+#   device_class: data_rate
+#   icon: mdi:television
+# 
+# sensor.port_8_download_speed:
+#   friendly_name: "Security Camera 1 Download"
+#   device_class: data_rate
+#   icon: mdi:cctv

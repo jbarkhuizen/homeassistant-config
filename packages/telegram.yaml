@@ -1,0 +1,16 @@
+# Example configuration.yaml entry for the Telegram Bot
+#telegram_bot:
+#  - platform: polling
+#    api_key: 6968699549:AAHpWjA5SLFUd3Kk2CTtM838Vlhp8bTKZEU #your bot API KEY HERE
+#    allowed_chat_ids:
+#      - 6167623299 #your username chatid here as supplied by telegram
+#      - -1002014412698 #your chatgroup_for_bot chatid here, notice that groups start with minus
+
+# this is needed for the Telegram Bot
+#notify:
+#  - platform: telegram
+#    name: BarkieHome Solar #Eg user: Heinz or  solar: Solar
+#    chat_id: 6167623299 #your username chatid here as supplied by telegram
+#  - platform: telegram
+#    name: chatgroup_for_bot
+#    chat_id: -1002014412698 #your chatgroup for your bot chatid here as supplied by telegram, notice that groups start with minus

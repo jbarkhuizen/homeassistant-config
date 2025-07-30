@@ -1,0 +1,87 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+#_------------------------------------------------------------------------------------------------------------------------------------------------
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+# Added code as suggested by Copilot
+  extra_module_url:
+    - /hacsfiles/kiosk-mode/kiosk-mode.js    
+#------------------------------------------------------------------------------------------------------------------------------------------------  
+# Text to speech default config
+tts:
+  - platform: google_translate  
+#------------------------------------------------------------------------------------------------------------------------------------------------  
+shell_command:
+  export_sensor_list: >
+    bash -c "hass-cli entity list | grep ^sensor. > /config/sensor_list.txt"
+#------------------------------------------------------------------------------------------------------------------------------------------------  
+http:
+  cors_allowed_origins:
+    - "http://localhost"
+    - "http://127.0.0.1"
+    - "http://192.168.1.61"
+  use_x_frame_options: false    
+#------------------------------------------------------------------------------------------------------------------------------------------------  
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+#input_select: !include select.yaml
+template: !include template.yaml    #we include template file here, soon replaced by packages folder
+ #template: !include template_MasterSlave_System.yaml  #change the config file depending on your system
+#------------------------------------------------------------------------------------------------------------------------------------------------  
+#The homeassistant packages will become the standard of loading configs going forward
+#be sure to add the packages folder and the 2 lines
+homeassistant:
+  packages: !include_dir_named packages
+  customize: !include customize.yaml
+#------------------------------------------------------------------------------------------------------------------------------------------------  
+# Telegram Bot config now in packages/telegram.yaml
+
+# The sensor below keeps the minimum soc of the battery for the last 12 hours,
+#only removed from DeyeSolarDesktop, not important
+# sensor:
+#   - platform: statistics
+#     name: "min_soc_battery"
+#     entity_id: sensor.deyeinverter_battery_soc
+#     state_characteristic: value_min
+#     max_age:
+#       hours: 12
+#     sampling_size: 144
+#------------------------------------------------------------------------------------------------------------------------------------------------  
+# Speedtest Integration Settings
+# Input Helpers for Configuration
+input_number:
+  speedtest_interval:
+    name: "Speedtest Interval (hours)"
+    min: 0.5
+    max: 24
+    step: 0.5
+    initial: 1
+    icon: mdi:speedometer
+
+input_boolean:
+  network_monitoring_enabled:
+    name: "Network Monitoring Enabled"
+    initial: true
+    icon: mdi:network    
+#------------------------------------------------------------------------------------------------------------------------------------------------      
+# Device Tracker for Network Devices
+device_tracker:
+  - platform: nmap_tracker
+    hosts: 192.168.1.1/24
+    home_interval: 5
+    consider_home: 600
+    scan_options: "-F --host-timeout 5s"
+    exclude:
+      - 192.168.1.1   # MetroFibre Router
+      - 192.168.1.90  # Home Assistant
+#      - 192.168.1.3   # TP-Link EAP245
+#      - 192.168.1.4   # Netgear Genie
+#      - 192.168.1.5   # TP-Link Archer D2
+#      - 192.168.1.8   # TP-Link EAP225 Outdoor
+#      - 192.168.1.9   # Netgear GS728TP
+    track_new_devices: true
+#------------------------------------------------------------------------------------------------------------------------------------------------            
+

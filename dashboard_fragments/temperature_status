@@ -1,0 +1,29 @@
+type: vertical-stack
+cards:
+  - type: markdown
+    content: >
+      ## 🌡️ Temperature Summary
+      {% set sensors = states.sensor | selectattr('entity_id', 'search', '_temperature') | list %}
+      {% set hot = sensors | selectattr('state', 'defined') | selectattr('state', 'float') | select('float', '>', 30) | list %}
+      {% if hot %}
+        🔥 **High temperature detected in {{ hot | length }} sensor(s):**  
+        {% for s in hot %}
+          - {{ s.name }}: {{ s.state }}°C
+        {% endfor %}
+      {% else %}
+        ✅ All temperature sensors are within normal range.
+      {% endif %}
+
+  - type: custom:auto-entities
+    card:
+      type: custom:button-card
+      show_name: true
+      show_state: true
+    filter:
+      include:
+        - domain: sensor
+          entity_id: "*_temperature"
+    sort:
+      method: state
+      numeric: true
+      reverse: false

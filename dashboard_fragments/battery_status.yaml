@@ -1,0 +1,34 @@
+type: vertical-stack
+cards:
+  - type: markdown
+    content: >
+      ## 🔋 Battery Summary
+      {% set sensors = states.sensor | selectattr('entity_id', 'search', '_battery') | list %}
+      {% set low = sensors | selectattr('state', 'defined') | selectattr('state', 'int') | select('int', '<=', 30) | list %}
+      {% if low %}
+        ⚠️ **Low battery detected in {{ low | length }} sensor(s):**  
+        {% for s in low %}
+          - {{ s.name }}: {{ s.state }}%
+        {% endfor %}
+      {% else %}
+        ✅ All battery sensors are above 30%.
+      {% endif %}
+
+  - type: custom:auto-entities
+    card:
+      type: custom:button-card
+      template: battery_card
+      show_name: true
+      show_state: true
+    filter:
+      include:
+        - domain: sensor
+          entity_id: "*_battery"
+          state: "<=30"
+        - domain: sensor
+          entity_id: "*_battery"
+          state: ">30"
+    sort:
+      method: state
+      numeric: true
+      reverse: false

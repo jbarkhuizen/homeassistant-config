@@ -1,0 +1,7 @@
+[
+  {
+    "name": "Deprecated 'Solar rising' sensor Warning · Reported by Sun This stops working in version 2026.1.0. Please address before upgrading. The 'Solar rising' sensor of the Sun integration is being deprecated; an equivalent 'Solar rising' binary sensor has been made available as a replacement. To resolve this issue, disable sensor.sun_solar_rising.",
+    "id": "53df58c44db74ec7974ee4aa665a2589",
+    "complete": false
+  }
+]

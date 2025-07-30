@@ -1,0 +1,29 @@
+type: vertical-stack
+cards:
+  - type: markdown
+    content: >
+      ## 📶 Signal Strength Summary
+      {% set sensors = states.sensor | selectattr('entity_id', 'search', '_rssi') | list %}
+      {% set weak = sensors | selectattr('state', 'defined') | selectattr('state', 'int') | select('int', '<', -80) | list %}
+      {% if weak %}
+        ⚠️ **Weak signal detected in {{ weak | length }} sensor(s):**  
+        {% for s in weak %}
+          - {{ s.name }}: {{ s.state }} dBm
+        {% endfor %}
+      {% else %}
+        ✅ All signal sensors are strong.
+      {% endif %}
+
+  - type: custom:auto-entities
+    card:
+      type: custom:button-card
+      show_name: true
+      show_state: true
+    filter:
+      include:
+        - domain: sensor
+          entity_id: "*_rssi"
+    sort:
+      method: state
+      numeric: true
+      reverse: true

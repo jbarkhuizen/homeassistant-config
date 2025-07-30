@@ -1,0 +1,217 @@
+# PrePaid Automation
+- id: '1717429630744'
+  alias: Prepaid meter recharge
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_number.prepaid_meter_units
+  condition:
+  - condition: template
+    value_template: '{{ states(''input_number.prepaid_meter_units'') | float > 0 }}'
+  actions:
+  - action: input_number.set_value
+    metadata: {}
+    data:
+      value: '{{ ((states(''sensor.deyeinvertermaster_summary_total_grid_import_buy'') |
+        float(6))  * 1000.0) }}'
+    target:
+      entity_id: input_number.prepaid_meter_inverter_total_units
+  mode: single
+#---------------------------------------------------------------------------------------
+# This automation was added by Co-Pilot on 17 july 2025 to send an email notofication if battery status are 30% or below
+# This automation runs at a scheduled time
+- id: notify_low_battery_email
+  alias: Notify Low Battery via Email and UI
+  description: Send email and UI alert if any battery is 30% or lower at 09:00
+  trigger:
+    - platform: time
+      at: "09:00:00"
+  condition:
+    - condition: template
+      value_template: >
+        {% set sensors = [
+          'sensor.sonoff_1002357bda_battery',
+          'sensor.sonoff_1002357619_battery',
+          'sensor.sonoff_a48005596e_battery',
+          'sensor.sonoff_a480098890_battery'
+        ] %}
+        {% set low = sensors | selectattr('state', 'defined') | selectattr('state', 'int') | select('int', '<=', 30) | list %}
+        {{ low | length > 0 }}
+  action:
+    - variables:
+        sensor_list:
+          - name: "5 Door Sensor"
+            id: sensor.sonoff_1002357bda_battery
+          - name: "Study Window 1"
+            id: sensor.sonoff_1002357619_battery
+          - name: "Gang Motion Sensor"
+            id: sensor.sonoff_a48005596e_battery
+          - name: "Front Door Sensor"
+            id: sensor.sonoff_a480098890_battery
+        low_batteries: >
+          {% set report = [] %}
+          {% for s in sensor_list %}
+            {% set level = states(s.id) | int %}
+            {% if level <= 30 %}
+              {% set icon = '🔋' %}
+              {% if level <= 10 %}
+                {% set color = '🟥' %}
+              {% elif level <= 20 %}
+                {% set color = '🟧' %}
+              {% elif level <= 30 %}
+                {% set color = '🟨' %}
+              {% else %}
+                {% set color = '🟩' %}
+              {% endif %}
+              {% set report = report + [color ~ ' ' ~ icon ~ ' ' ~ s.name ~ ': ' ~ level ~ '%'] %}
+            {% endif %}
+          {% endfor %}
+          {{ report }}
+    - service: notify.email
+      data:
+        title: "🔋 Low Battery Alert"
+        message: >
+          {% if low_batteries %}
+            The following sensors have low battery levels:\n\n{{ low_batteries | join('\n') }}
+          {% else %}
+            All monitored sensors are above 30%.
+          {% endif %}
+    - service: persistent_notification.create
+      data:
+        title: "🔋 Low Battery Alert"
+        message: >
+          {% if low_batteries %}
+            The following sensors have low battery levels:\n\n{{ low_batteries | join('\n') }}
+          {% else %}
+            All monitored sensors are above 30%.
+          {% endif %}
+
+#---------------------------------------------------------------------------------------
+# In automations.yaml
+- id: network_downtime_alert
+  alias: "Network Downtime Alert"
+  description: "Send email when MetroFibre router goes offline"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.metrofibre_router
+      to: 'off'
+      for: "00:00:30"
+  condition:
+    - condition: state
+      entity_id: input_boolean.network_monitoring_enabled
+      state: 'on'
+  action:
+    - service: notify.email
+      data:
+        to: jbarkhuizen@gmail.com
+        title: "🚨 Network Downtime Alert"
+        message: >
+          MetroFibre Router at 192.168.1.1 is OFFLINE as of {{ now().strftime('%Y-%m-%d %H:%M:%S') }}.
+          
+          Speed Test Results (last known):
+          - Download: {{ states('sensor.speedtest_download') }} Mbps
+          - Upload: {{ states('sensor.speedtest_upload') }} Mbps
+          - Ping: {{ states('sensor.speedtest_ping') }} ms
+          
+          Network Device Status:
+          - TP-Link EAP245 (192.168.1.3): {{ 'Online' if is_state('binary_sensor.tplink_eap245', 'on') else 'Offline' }}
+          - Netgear Genie (192.168.1.4): {{ 'Online' if is_state('binary_sensor.netgear_genie', 'on') else 'Offline' }}
+          - TP-Link Archer D2 (192.168.1.5): {{ 'Online' if is_state('binary_sensor.tplinl_archer_d2', 'on') else 'Offline' }}
+          - TP-Link EAP225 Outdoor (192.168.1.8): {{ 'Online' if is_state('binary_sensor.tplink_eap225_outdoo', 'on') else 'Offline' }}
+          - Netgear GS728TP Switch (192.168.1.9): {{ 'Online' if is_state('binary_sensor.netgear_gs728tp', 'on') else 'Offline' }}          
+          
+- id: network_recovery_alert
+  alias: "Network Recovery Alert"
+  description: "Send email when MetroFibre router comes back online"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.metrofibre_router
+      to: 'on'
+      for: "00:01:00"
+  condition:
+    - condition: state
+      entity_id: input_boolean.network_monitoring_enabled
+      state: 'on'
+  action:
+    - service: notify.email
+      data:
+        to: jbarkhuizen@gmail.com
+        title: "✅ Network Recovery Alert"
+        message: >
+          MetroFibre Router at 192.168.1.1 is back ONLINE as of {{ now().strftime('%Y-%m-%d %H:%M:%S') }}.
+          
+          Downtime duration: {{ ((as_timestamp(now()) - as_timestamp(state_attr('binary_sensor.metrofibre_router', 'last_changed'))) / 60) | round(1) }} minutes  
+            
+- id: network_degradation_alert
+  alias: "Speed Degradation Alert"
+  description: "Alert when internet speed drops significantly"
+  trigger:
+    - platform: state
+      entity_id: sensor.speedtest_download
+    - platform: state
+      entity_id: sensor.speedtest_upload
+  condition:
+    - condition: template
+      value_template: >
+        {{ states('sensor.speedtest_download') | float < 250 or 
+           states('sensor.speedtest_upload') | float < 250 }}
+    - condition: state
+      entity_id: input_boolean.network_monitoring_enabled
+      state: 'on'
+  action:
+    - service: notify.email
+      data:
+        to: jbarkhuizen@gmail.com
+        title: "⚠️ Internet Speed Degradation"
+        message: >
+          Internet speed has dropped below 50% of expected performance:
+           
+            Current Results:
+            - Download: {{ states('sensor.speedtest_download') }} Mbps (Expected: 500 Mbps)
+            - Upload: {{ states('sensor.speedtest_upload') }} Mbps (Expected: 500 Mbps)
+            - Ping: {{ states('sensor.speedtest_ping') }} ms
+            
+            Tested at: {{ now().strftime('%Y-%m-%d %H:%M:%S') }}            
+            
+- id: network_device_offline_alert
+  alias: "Network Device Offline Alert"
+  description: "Alert when any network device goes offline"
+  trigger:
+    - platform: state
+      entity_id: 
+        - binary_sensor.tplink_eap245_ping
+        - binary_sensor.netgear_genie_ping
+        - binary_sensor.tplinl_archer_d2_ping
+        - binary_sensor.tplink_eap225_outdoor_ping
+        - binary_sensor.netgear_gs728tp_ping
+      to: 'off'
+      for: "00:02:00"  # 2 minutes for network devices
+  condition:
+    - condition: state
+      entity_id: input_boolean.network_monitoring_enabled
+      state: 'on'
+  action:
+    - service: notify.email
+      data:
+        to: jbarkhuizen@gmail.com
+        title: "⚠️ Network Device Offline"
+        message: >
+          Network device {{ trigger.to_state.attributes.friendly_name }} at {{ trigger.to_state.attributes.ip_address | default('unknown IP') }} went offline at {{ now().strftime('%Y-%m-%d %H:%M:%S') }}.
+          
+          Device: {{ trigger.to_state.attributes.friendly_name }}
+          
+          Overall Network Health: {{ states('sensor.network_status_summary') }}%           
+          
+- id: update_speedtest_interval
+  alias: "Update Speedtest Interval"
+  description: "Update speedtest interval based on input helper"
+  trigger:
+    - platform: state
+      entity_id: input_number.speedtest_interval
+  action:
+    - service: speedtestdotnet.setup
+      data:
+        scan_interval:
+          hours: "{{ states('input_number.speedtest_interval') | float }}"          
+#---------------------------------------------------------------------------------------

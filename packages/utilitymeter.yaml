@@ -1,0 +1,13 @@
+utility_meter:
+# Below Sensors is applicable to the Sunsynk Inverters
+  master_energy_battery_charge_grid:
+    name: deyeinvertermaster_summary_day_battery_charge_grid
+    source: sensor.deyeinvertermaster_summary_total_battery_charge_grid
+    cycle: daily
+
+  slave_energy_battery_charge_grid:
+    name: deyeinverterslave_summary_day_battery_charge_grid
+    source: sensor.deyeinverterslave_summary_total_battery_charge_grid
+    cycle:
+      daily
+#----------------------------------------------------------------------------------------------------------------------      

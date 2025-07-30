@@ -1,0 +1,21 @@
+type: vertical-stack
+cards:
+  - type: markdown
+    content: >
+      ## 🚫 Unavailable Entities
+      {% set entities = states | selectattr('state', 'equalto', 'unavailable') | list %}
+      {% if entities %}
+        ⚠️ **{{ entities | length }} entities are currently unavailable:**  
+        {% for e in entities %}
+          - {{ e.name }}
+        {% endfor %}
+      {% else %}
+        ✅ All entities are online.
+      {% endif %}
+
+  - type: custom:auto-entities
+    card:
+      type: entities
+    filter:
+      include:
+        - state: "unavailable"

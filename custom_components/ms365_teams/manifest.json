@@ -1,0 +1,24 @@
+{
+  "domain": "ms365_teams",
+  "name": "Microsoft 365 - Teams",
+  "codeowners": [
+    "@RogerSelwyn"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "http"
+  ],
+  "documentation": "https://github.com/RogerSelwyn/MS365-Teams",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/RogerSelwyn/MS365-Teams/issues",
+  "loggers": [
+    "custom_components.ms365_teams",
+    "O365"
+  ],
+  "requirements": [
+    "O365>=2.1.4",
+    "BeautifulSoup4>=4.10.0",
+    "portalocker>=3.1.1"
+  ],
+  "version": "v1.6.5"
+}

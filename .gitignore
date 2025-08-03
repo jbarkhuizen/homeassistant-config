@@ -1,3 +1,71 @@
+<<<<<<< HEAD
+# Home Assistant Specific
+*.log
+*.db
+*.db-shm
+*.db-wal
+OZW_Log.txt
+home-assistant.log*
+home-assistant_v2.db*
+
+# Secrets and sensitive data
+secrets.yaml
+known_devices.yaml
+ip_bans.yaml
+.cloud/
+.storage/
+.google.token
+
+# Temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+pip-selfcheck.json
+.uuid
+.HA_VERSION
+
+# Directories to ignore
+deps/
+tts/
+www/snapshots/
+.tmp/
+.config_entries.json
+
+# Device specific
+*.conf
+*.crt
+*.csr
+*.key
+*.pem
+
+# Add-on specific
+addons/
+ssl/
+share/
+backup/
+media/
+
+# HACS
+/custom_components/hacs/
+/www/community/
+
+# Specific integrations that store sensitive data
+.spotify-token-cache
+.ring_cache.pickle
+
+# Log files
+*.log.*
+*.log
+
+# Database files
+*.db-journal
+
+# Zwavejs2mqtt
+zwavejs2mqtt/
+=======
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -205,3 +273,4 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+>>>>>>> 1f1109c2ea3a3634ecaa4e03022783080f0cd856

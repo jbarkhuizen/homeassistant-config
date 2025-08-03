@@ -52,6 +52,7 @@ homeassistant:
 #------------------------------------------------------------------------------------------------------------------------------------------------  
 # Speedtest Integration Settings
 # Input Helpers for Configuration
+# Added by Claude.AI on 30 July 2025
 input_number:
   speedtest_interval:
     name: "Speedtest Interval (hours)"
@@ -60,14 +61,23 @@ input_number:
     step: 0.5
     initial: 1
     icon: mdi:speedometer
+#------------------------------------------------------------------------------------------------------------------------------------------------      
 
+#------------------------------------------------------------------------------------------------------------------------------------------------  
+# Network Integration Settings
+# Input Helpers for Configuration
+# Added by Claude.AI on 30 July 2025
 input_boolean:
   network_monitoring_enabled:
     name: "Network Monitoring Enabled"
     initial: true
     icon: mdi:network    
+    
+#------------------------------------------------------------------------------------------------------------------------------------------------      
+
 #------------------------------------------------------------------------------------------------------------------------------------------------      
 # Device Tracker for Network Devices
+# Added by Claude.AI on 30 July 202
 device_tracker:
   - platform: nmap_tracker
     hosts: 192.168.1.1/24

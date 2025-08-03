@@ -7,6 +7,7 @@ influxdb:
   include:
     entities:
 # Below entities added for Speedtest.net    
+# Added by Claude.ai on 30 July 2025
         - sensor.speedtest_download
         - sensor.speedtest_upload
         - sensor.speedtest_ping
@@ -18,6 +19,29 @@ influxdb:
         - binary_sensor.netgear_gs728tp
         - sensor.network_status_summary
         - sensor.metrofibre_router_uptime
+# Below entities added for Efergy Power Management
+# Added by Claude.ai on 30 July 2025
+      # Current power sensors
+        - sensor.efergy_power_usage
+        - sensor.current_power_usage_kw
+      # Usage meters
+        - sensor.energy_hourly
+        - sensor.energy_daily
+        - sensor.energy_weekly
+        - sensor.energy_monthly
+        - sensor.energy_quarterly
+        - sensor.energy_yearly
+      # Cost sensors
+        - sensor.energy_cost_daily
+        - sensor.energy_cost_weekly
+        - sensor.energy_cost_monthly
+        - sensor.energy_cost_quarterly
+        - sensor.energy_cost_yearly
+      # Comparison sensors
+        - sensor.daily_usage_comparison
+        - sensor.monthly_usage_comparison
+        - sensor.average_daily_usage
+        - sensor.projected_monthly_cost
 #--------------------------------------------------------------------------------    
         -  device_tracker.00_12_43_1f_35_5a
         -  switch.00_12_43_1f_35_5a_allowed_on_network

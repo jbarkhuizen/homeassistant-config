@@ -11,3 +11,51 @@ utility_meter:
     cycle:
       daily
 #----------------------------------------------------------------------------------------------------------------------      
+# Utility Meters for Energy Tracking
+# Added by Claude.ai on 31 July 2025
+  # Hourly tracking
+  energy_hourly:
+    source: sensor.efergy_power_usage
+    cycle: hourly
+    name: "Energy Usage Hourly"
+
+  # Daily tracking
+  energy_daily:
+    source: sensor.efergy_power_usage
+    cycle: daily
+    name: "Energy Usage Daily"
+
+  # Weekly tracking
+  energy_weekly:
+    source: sensor.efergy_power_usage
+    cycle: weekly
+    name: "Energy Usage Weekly"
+
+  # Monthly tracking
+  energy_monthly:
+    source: sensor.efergy_power_usage
+    cycle: monthly
+    name: "Energy Usage Monthly"
+
+  # Quarterly tracking
+  energy_quarterly:
+    source: sensor.efergy_power_usage
+    cycle: quarterly
+    name: "Energy Usage Quarterly"
+
+  # Yearly tracking
+  energy_yearly:
+    source: sensor.efergy_power_usage
+    cycle: yearly
+    name: "Energy Usage Yearly"
+
+  # Alternative tracking for comparisons (using different cycles)
+  energy_daily_alt:
+    source: sensor.efergy_power_usage
+    cycle: daily
+    name: "Energy Usage Daily Alt"
+
+  energy_monthly_alt:
+    source: sensor.efergy_power_usage
+    cycle: monthly
+    name: "Energy Usage Monthly Alt"

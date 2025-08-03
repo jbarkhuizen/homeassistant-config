@@ -381,6 +381,7 @@
       state: "{{ states.sensor | map(attribute='entity_id') | list }}"
 #-----------------------------------------------------------------------------------------------------------
 #MetroFibre Router Uptime
+#Added by Claude.ai on 30 July 2025
  # Template Sensors for Uptime Calculation
     - name: "MetroFibre Router Uptime"
       state: >
@@ -409,6 +410,7 @@
       icon: mdi:network-strength-4
 #-----------------------------------------------------------------------------------------------------------          
 # Device-specific bandwidth calculation
+# Added by Claude.ai on 30 July 2025
     - name: "Device 1 Download Speed"
       state: >
         {% if states('sensor.switch_port_1_bytes_out') not in ['unavailable', 'unknown'] %}
@@ -431,6 +433,7 @@
         switch_port: 1
 #-----------------------------------------------------------------------------------------------------------                  
 # Template sensors for real-time bandwidth calculation (Add to configuration.yaml)
+# Added by Claude.ai on 30 July 2025
       # Port 1 Bandwidth
     - name: "Port 1 Download Speed"
       state: >
@@ -1406,3 +1409,138 @@
           {{ total | round(2) }}
       unit_of_measurement: "Mbps"
       icon: mdi:upload-network-outline
+#-----------------------------------------------------------------------------------------------------------      
+# Template sensors for comprehensive energy analysis
+# Added by Claude.ai on 31 July 2025
+# Current Power in kW
+    - name: "Current Power Usage kW"
+      state: >
+        {{ (states('sensor.efergy_power_usage') | float / 1000) | round(3) }}
+      unit_of_measurement: "kW"
+      device_class: power
+      icon: mdi:flash
+    
+    # Hourly Cost
+    - name: "Energy Cost Hourly"
+      state: >
+        {{ (states('sensor.energy_hourly') | float * states('input_number.electricity_rate') | float) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+      attributes:
+        usage_kwh: "{{ states('sensor.energy_hourly') }}"
+        rate: "{{ states('input_number.electricity_rate') }}"
+    
+    # Daily Cost
+    - name: "Energy Cost Daily"
+      state: >
+        {% set usage = states('sensor.energy_daily') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float %}
+        {{ ((usage * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+      attributes:
+        usage_kwh: "{{ states('sensor.energy_daily') }}"
+        energy_cost: "{{ (states('sensor.energy_daily') | float * states('input_number.electricity_rate') | float) | round(2) }}"
+        connection_fee: "{{ states('input_number.daily_connection_fee') }}"
+    
+    # Weekly Cost
+    - name: "Energy Cost Weekly"
+      state: >
+        {% set usage = states('sensor.energy_weekly') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float * 7 %}
+        {{ ((usage * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+    
+    # Monthly Cost
+    - name: "Energy Cost Monthly"
+      state: >
+        {% set usage = states('sensor.energy_monthly') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float * 30 %}
+        {{ ((usage * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+      attributes:
+        usage_kwh: "{{ states('sensor.energy_monthly') }}"
+        projected_annual: "{{ (states('sensor.energy_cost_monthly') | float * 12) | round(2) }}"
+    
+    # Quarterly Cost
+    - name: "Energy Cost Quarterly"
+      state: >
+        {% set usage = states('sensor.energy_quarterly') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float * 90 %}
+        {{ ((usage * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+    
+    # Yearly Cost
+    - name: "Energy Cost Yearly"
+      state: >
+        {% set usage = states('sensor.energy_yearly') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float * 365 %}
+        {{ ((usage * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+    
+    # Comparison Sensors
+    - name: "Daily Usage Comparison"
+      state: >
+        {% set today = states('sensor.energy_daily') | float %}
+        {% set yesterday = states('sensor.energy_daily_previous') | float %}
+        {% if yesterday > 0 %}
+          {{ (((today - yesterday) / yesterday) * 100) | round(1) }}
+        {% else %}
+          0
+        {% endif %}
+      unit_of_measurement: "%"
+      icon: mdi:compare-horizontal
+      attributes:
+        today_kwh: "{{ states('sensor.energy_daily') }}"
+        yesterday_kwh: "{{ states('sensor.energy_daily_previous') }}"
+        difference_kwh: "{{ (states('sensor.energy_daily') | float - states('sensor.energy_daily_previous') | float) | round(2) }}"
+    
+    - name: "Monthly Usage Comparison"
+      state: >
+        {% set current = states('sensor.energy_monthly') | float %}
+        {% set previous = states('sensor.energy_monthly_previous') | float %}
+        {% if previous > 0 %}
+          {{ (((current - previous) / previous) * 100) | round(1) }}
+        {% else %}
+          0
+        {% endif %}
+      unit_of_measurement: "%"
+      icon: mdi:compare-horizontal
+    
+    # Efficiency Metrics
+    - name: "Average Daily Usage"
+      state: >
+        {% set monthly = states('sensor.energy_monthly') | float %}
+        {% set days = now().day %}
+        {{ (monthly / days) | round(2) }}
+      unit_of_measurement: "kWh/day"
+      icon: mdi:chart-line
+    
+    - name: "Projected Monthly Cost"
+      state: >
+        {% set daily_avg = states('sensor.average_daily_usage') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float * 30 %}
+        {{ ((daily_avg * 30 * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:trending-up
+#-----------------------------------------------------------------------------------------------------------            
+
+
+
+
+
+
+
+
+
+

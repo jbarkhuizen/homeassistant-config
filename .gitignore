@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Home Assistant Specific
 *.log
 *.db
@@ -65,7 +64,6 @@ media/
 
 # Zwavejs2mqtt
 zwavejs2mqtt/
-=======
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -273,4 +271,3 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
->>>>>>> 1f1109c2ea3a3634ecaa4e03022783080f0cd856

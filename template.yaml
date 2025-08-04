@@ -39,17 +39,32 @@
           on
         {% endif %}
 
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Claude.ai recommended that the below code 44-53 is replaced with code 54-66 on 4 Aug 2025        
+#    - name: deyeinvertermaster_battery_charge_grid_power
+#      unit_of_measurement: "kW"
+#      state_class: measurement
+#      device_class: power
+#      state: >-
+#        {% if states('sensor.deyeinvertermaster_inverter_output_power')|float < 0.0 %}
+#        {{ (states('sensor.deyeinvertermaster_battery_output_power') | float(4) | abs ) * 0.001  }}
+#        {% else %}
+#        0.0
+#        {% endif %}
     - name: deyeinvertermaster_battery_charge_grid_power
       unit_of_measurement: "kW"
       state_class: measurement
       device_class: power
       state: >-
-        {% if states('sensor.deyeinvertermaster_inverter_output_power')|float < 0.0 %}
-        {{ (states('sensor.deyeinvertermaster_battery_output_power') | float(4) | abs ) * 0.001  }}
-        {% else %}
-        0.0
-        {% endif %}
-
+              {% if states('sensor.deyeinvertermaster_inverter_output_power') | float(0) < 0.0 %}
+                {{ (states('sensor.deyeinvertermaster_battery_output_power') | float(0) | abs ) * 0.001  }}
+              {% else %}
+                0.0
+              {% endif %}
+      availability: >-
+              {{ has_value('sensor.deyeinvertermaster_inverter_output_power') and 
+                has_value('sensor.deyeinvertermaster_battery_output_power') }}
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     - name: "deyeinvertermaster_ha_time"
       state: |
         {{ now().strftime('%y%m%d%H%M') }}

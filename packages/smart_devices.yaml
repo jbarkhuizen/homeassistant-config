@@ -1,0 +1,117 @@
+# packages/smart_devices.yaml
+# Smart Device Management and Monitoring
+
+template:
+  - sensor:
+      # Device Health Monitoring
+      - name: "sonoff_devices_online"
+        state: >-
+          {% set sonoff_devices = integration_entities('localtuya') | select('match', 'switch.sonoff_.*') | list %}
+          {% set online_count = sonoff_devices | select('is_state', 'unavailable') | list | length %}
+          {{ (sonoff_devices | length) - online_count }}
+        attributes:
+          total_devices: >-
+            {{ integration_entities('localtuya') | select('match', 'switch.sonoff_.*') | list | length }}
+          offline_devices: >-
+            {% set offline = [] %}
+            {% for entity in integration_entities('localtuya') %}
+              {% if 'sonoff' in entity and is_state(entity, 'unavailable') %}
+                {% set offline = offline + [entity] %}
+              {% endif %}
+            {% endfor %}
+            {{ offline | join(', ') }}
+
+      # Power Consumption Summary
+      - name: "total_smart_device_power"
+        state: >-
+          {% set power_sensors = states.sensor | selectattr('entity_id', 'match', 'sensor.sonoff_.*_power') | map(attribute='state') | map('float', 0) | sum %}
+          {{ power_sensors | round(1) }}
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+
+      - name: "total_smart_device_energy_today"
+        state: >-
+          {% set energy_sensors = states.sensor | selectattr('entity_id', 'match', 'sensor.sonoff_.*_energy') | map(attribute='state') | map('float', 0) | sum %}
+          {{ energy_sensors | round(2) }}
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+
+automation:
+  # SONOFF Device Offline Alert
+  - id: sonoff_device_offline_alert
+    alias: "SONOFF Device Offline Alert"
+    description: "Alert when SONOFF devices go offline"
+    trigger:
+      - platform: state
+        entity_id: 
+          - switch.sonoff_1000cd8453
+          - switch.sonoff_100148ec9b
+          - switch.sonoff_10009ce3f9  # Pool pump
+        to: 'unavailable'
+        for: "00:05:00"
+    action:
+      - service: notify.email
+        data:
+          to: jbarkhuizen@gmail.com
+          title: "⚠️ Smart Device Offline"
+          message: >
+            SONOFF Device Alert:
+            
+            Device: {{ trigger.to_state.attributes.friendly_name }}
+            Status: Offline/Unavailable
+            Time: {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+            
+            Device Details:
+            - Entity ID: {{ trigger.entity_id }}
+            - Last Seen: {{ trigger.from_state.last_changed }}
+            
+            Action Required: Check device power/network connection
+
+  # High Power Usage Alert
+  - id: high_power_usage_alert
+    alias: "High Power Usage Alert"
+    description: "Alert when smart devices consume excessive power"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.total_smart_device_power
+        above: 5000  # 5kW threshold
+        for: "00:10:00"
+    action:
+      - service: notify.email
+        data:
+          to: jbarkhuizen@gmail.com
+          title: "⚡ High Smart Device Power Usage"
+          message: >
+            High Power Consumption Alert:
+            
+            Total Smart Device Power: {{ states('sensor.total_smart_device_power') }}W
+            Threshold Exceeded: 5000W
+            
+            Top Power Consumers:
+            {% for state in states.sensor if 'sonoff' in state.entity_id and 'power' in state.entity_id %}
+              {% if state.state | float(0) > 100 %}
+            - {{ state.attributes.friendly_name }}: {{ state.state }}W
+              {% endif %}
+            {% endfor %}
+
+group:
+  # Device Groups for easy management
+  smart_switches:
+    name: "Smart Switches"
+    entities:
+      - switch.sonoff_1000cd8453
+      - switch.sonoff_100148ec9b
+      - switch.salon_b_door
+      - switch.salon_f_door
+      - switch.study_front
+      - switch.study_inside
+
+  power_monitoring_devices:
+    name: "Power Monitoring Devices"
+    entities:
+      - sensor.sonoff_1000cd8453_power
+      - sensor.sonoff_1000cd8453_energy
+      - sensor.study_power
+      - sensor.salon_power

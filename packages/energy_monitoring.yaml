@@ -1,0 +1,124 @@
+# packages/energy_monitoring.yaml
+# Comprehensive Energy Monitoring System
+# Updated: August 2025
+
+utility_meter:
+  # Solar Production Tracking
+  solar_production_daily:
+    source: sensor.deyeinvertercombined_pv_power_daily
+    cycle: daily
+    name: "Daily Solar Production"
+    
+  solar_production_monthly:
+    source: sensor.deyeinvertercombined_pv_power_daily
+    cycle: monthly
+    name: "Monthly Solar Production"
+    
+  solar_production_yearly:
+    source: sensor.deyeinvertercombined_pv_power_daily
+    cycle: yearly
+    name: "Yearly Solar Production"
+
+  # Grid Import/Export Tracking
+  grid_import_daily:
+    source: sensor.deyeinvertercombined_grid_import_total
+    cycle: daily
+    name: "Daily Grid Import"
+    
+  grid_export_daily:
+    source: sensor.deyeinvertercombined_grid_export_total
+    cycle: daily
+    name: "Daily Grid Export"
+
+  # Battery Cycle Tracking
+  battery_charge_daily:
+    source: sensor.deyeinvertercombined_battery_charge_total
+    cycle: daily
+    name: "Daily Battery Charge"
+    
+  battery_discharge_daily:
+    source: sensor.deyeinvertercombined_battery_discharge_total
+    cycle: daily
+    name: "Daily Battery Discharge"
+
+template:
+  - sensor:
+      # Energy Cost Calculations
+      - name: "daily_energy_cost_savings"
+        state: >-
+          {% set solar_used = states('sensor.deyeinvertercombined_solar_power_used') | float(0) %}
+          {% set grid_rate = 2.50 %}  # Update with your current rate per kWh
+          {{ (solar_used * grid_rate) | round(2) }}
+        unit_of_measurement: "R"
+        device_class: monetary
+
+      - name: "monthly_energy_cost_savings"
+        state: >-
+          {% set monthly_solar = states('sensor.monthly_solar_production') | float(0) %}
+          {% set grid_rate = 2.50 %}
+          {{ (monthly_solar * grid_rate) | round(2) }}
+        unit_of_measurement: "R"
+        device_class: monetary
+
+      # Self-sufficiency calculations
+      - name: "energy_self_sufficiency_today"
+        state: >-
+          {% set solar_used = states('sensor.daily_solar_production') | float(0) %}
+          {% set total_consumption = states('sensor.deyeinvertercombined_essential_load_daily') | float(1) %}
+          {{ ((solar_used / total_consumption) * 100) | round(1) }}
+        unit_of_measurement: "%"
+
+sensor:
+  # Integration sensors for energy totals
+  - platform: integration
+    source: sensor.deyeinvertercombined_pv_power
+    name: deyeinvertercombined_pv_power_daily
+    unit_prefix: k
+    round: 2
+    method: left
+    
+  - platform: integration
+    source: sensor.deyeinvertercombined_essential_load
+    name: deyeinvertercombined_essential_load_daily
+    unit_prefix: k
+    round: 2
+    method: left
+
+automation:
+  - id: daily_energy_report
+    alias: "Daily Energy Report"
+    description: "Send daily energy summary email"
+    trigger:
+      - platform: time
+        at: "22:00:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.energy_reporting_enabled
+        state: 'on'
+    action:
+      - service: notify.email
+        data:
+          to: jbarkhuizen@gmail.com
+          title: "🌞 Daily Energy Report - {{ now().strftime('%d %B %Y') }}"
+          message: >
+            Daily Energy Summary:
+            
+            ☀️ Solar Production: {{ states('sensor.daily_solar_production') }} kWh
+            🔋 Battery Charged: {{ states('sensor.daily_battery_charge') }} kWh
+            ⚡ Energy Consumed: {{ states('sensor.deyeinvertercombined_essential_load_daily') }} kWh
+            🏠 Self-Sufficiency: {{ states('sensor.energy_self_sufficiency_today') }}%
+            💰 Cost Savings: R{{ states('sensor.daily_energy_cost_savings') }}
+            
+            System Status:
+            - Master Inverter SOC: {{ states('sensor.deyeinvertermaster_battery_soc') }}%
+            - Slave Inverter SOC: {{ states('sensor.deyeinverterslave_battery_soc') }}%
+            - Combined SOC: {{ states('sensor.deyeinvertercombined_battery_soc') }}%
+            
+            Weather Impact:
+            - Today's Conditions: {{ states('weather.home') }}
+            - UV Index: {{ state_attr('weather.home', 'uv_index') }}
+
+input_boolean:
+  energy_reporting_enabled:
+    name: "Enable Daily Energy Reports"
+    icon: mdi:email-newsletter

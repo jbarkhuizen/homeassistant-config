@@ -410,1005 +410,1581 @@
       icon: mdi:network-strength-4
 #-----------------------------------------------------------------------------------------------------------          
 # Device-specific bandwidth calculation
-# Added by Claude.ai on 30 July 2025
-    - name: "Device 1 Download Speed"
-      state: >
-        {% if states('sensor.switch_port_1_bytes_out') not in ['unavailable', 'unknown'] %}
-          {% set current = states('sensor.switch_port_1_bytes_out') | int(0) %}
-          {% set previous = state_attr('sensor.device_1_download_speed', 'previous') | default(current) %}
-          {% set time_diff = 30 %}
-          {% if current > previous %}
-            {{ ((current - previous) * 8 / time_diff / 1000000) | round(2) }}
-          {% else %}
-            {{ states('sensor.device_1_download_speed') | default(0) }}
-          {% endif %}
-        {% else %}
-          0
-        {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_1_bytes_out') | int(0) }}"
-        device_name: "Your Device Name"
-        switch_port: 1
+# Added by Claude. trigger:
+# Trigger on SNMP sensor state changes
+    - trigger:
+# Trigger on SNMP sensor state changes
+      - platform: state
+        entity_id: 
+          - sensor.switch_port_1_bytes_out
+          - sensor.switch_port_1_bytes_in
+        not_to: 
+          - 'unknown'
+          - 'unavailable'
+# Also trigger every 30 seconds to ensure regular updates  
+      - platform: time_pattern
+        seconds: "/30"
+
+#-----------------------------------------------------------------------------------------------------------
+ 
 #-----------------------------------------------------------------------------------------------------------                  
 # Template sensors for real-time bandwidth calculation (Add to configuration.yaml)
 # Added by Claude.ai on 30 July 2025
-      # Port 1 Bandwidth
-    - name: "Port 1 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_1_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_1_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_1_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_1_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+ # ===================================================================
+  # PORTS 1-6 BANDWIDTH MONITORING
+  # ===================================================================
+    - trigger:
+      - platform: state
+        entity_id: 
+          - sensor.switch_port_1_bytes_out
+          - sensor.switch_port_1_bytes_in
+          - sensor.switch_port_2_bytes_out
+          - sensor.switch_port_2_bytes_in
+          - sensor.switch_port_3_bytes_out
+          - sensor.switch_port_3_bytes_in
+          - sensor.switch_port_4_bytes_out
+          - sensor.switch_port_4_bytes_in
+          - sensor.switch_port_5_bytes_out
+          - sensor.switch_port_5_bytes_in
+          - sensor.switch_port_6_bytes_out
+          - sensor.switch_port_6_bytes_in
+        not_to: ['unknown', 'unavailable']
+      - platform: time_pattern
+        seconds: "/30"
+        sensor:
+      # Port 1 Sensors
+      - name: "Port 1 Download Speed"
+        unique_id: port_1_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_1_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_1_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 1"
-          
-    - name: "Port 1 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_1_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_1_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_1_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_1_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_1_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 1"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_1_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_1_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 1"
+          switch_port: 1
 
-      # Port 2 Bandwidth
-    - name: "Port 2 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_2_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_2_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_2_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_2_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      - name: "Port 1 Upload Speed"
+        unique_id: port_1_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_1_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_2_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 2"
-          
-      # Port 3 Bandwidth
-    - name: "Port 3 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_3_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_3_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_3_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_3_download_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_3_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 3"
-          
-    - name: "Port 3 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_3_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_3_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_3_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_3_upload_speed') | default(0) }}
-            {% endif %}
-          {% else %}
-            0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_3_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 3"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_1_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_1_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 1"
+          switch_port: 1
 
-      # Port 4 Bandwidth
-    - name: "Port 4 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_4_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_4_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_4_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_4_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      # Port 2 Sensors
+      - name: "Port 2 Download Speed"
+        unique_id: port_2_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_2_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_4_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 4"
-          
-    - name: "Port 4 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_4_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_4_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_4_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_4_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_4_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 4"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_2_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_2_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 2"
+          switch_port: 2
 
-      # Ports 5-8
-    - name: "Port 5 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_5_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_5_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_5_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_5_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      - name: "Port 2 Upload Speed"
+        unique_id: port_2_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_2_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_5_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 5"
-          
-    - name: "Port 5 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_5_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_5_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_5_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_5_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_5_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 5"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_2_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_2_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 2"
+          switch_port: 2
 
-    - name: "Port 6 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_6_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_6_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_6_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_6_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      # Port 3 Sensors
+      - name: "Port 3 Download Speed"
+        unique_id: port_3_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_3_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_6_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 6"
-          
-    - name: "Port 6 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_6_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_6_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_6_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_6_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_6_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 6"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_3_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_3_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 3"
+          switch_port: 3
 
-    - name: "Port 7 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_7_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_7_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_7_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_7_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      - name: "Port 3 Upload Speed"
+        unique_id: port_3_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_3_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_7_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 7"
-          
-    - name: "Port 7 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_7_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_7_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_7_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_7_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_7_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 7"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_3_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_3_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 3"
+          switch_port: 3
 
-    - name: "Port 8 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_8_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_8_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_8_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_8_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      # Port 4 Sensors
+      - name: "Port 4 Download Speed"
+        unique_id: port_4_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_4_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_8_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 8"
-          
-    - name: "Port 8 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_8_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_8_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_8_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_8_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_8_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 8"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_4_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_4_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 4"
+          switch_port: 4
 
-      # Ports 9-16
-    - name: "Port 9 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_9_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_9_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_9_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_9_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      - name: "Port 4 Upload Speed"
+        unique_id: port_4_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_4_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_9_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 9"
-          
-    - name: "Port 9 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_9_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_9_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_9_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_9_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_9_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 9"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_4_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_4_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 4"
+          switch_port: 4
 
-    - name: "Port 10 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_10_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_10_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_10_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_10_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      # Port 5 Sensors
+      - name: "Port 5 Download Speed"
+        unique_id: port_5_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_5_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_10_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 10"
-          
-    - name: "Port 10 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_10_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_10_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_10_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_10_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_10_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 10"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_5_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_5_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 5"
+          switch_port: 5
 
-    - name: "Port 11 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_11_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_11_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_11_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_11_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      - name: "Port 5 Upload Speed"
+        unique_id: port_5_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_5_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_11_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 11"
-          
-    - name: "Port 11 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_11_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_11_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_11_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_11_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_11_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 11"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_5_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_5_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 5"
+          switch_port: 5
 
-    - name: "Port 12 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_12_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_12_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_12_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_12_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      # Port 6 Sensors
+      - name: "Port 6 Download Speed"
+        unique_id: port_6_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_6_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_12_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 12"
-          
-    - name: "Port 12 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_12_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_12_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_12_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_12_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_12_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 12"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_6_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_6_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 6"
+          switch_port: 6
 
-    - name: "Port 13 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_13_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_13_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_13_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_13_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      - name: "Port 6 Upload Speed"
+        unique_id: port_6_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_6_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_13_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 13"
-          
-    - name: "Port 13 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_13_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_13_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_13_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_13_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_13_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 13"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_6_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_6_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 6"
+          switch_port: 6
 
-    - name: "Port 14 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_14_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_14_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_14_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_14_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+  # ===================================================================
+  # PORTS 7-12 BANDWIDTH MONITORING
+  # ===================================================================
+    - trigger:
+      - platform: state
+        entity_id: 
+          - sensor.switch_port_7_bytes_out
+          - sensor.switch_port_7_bytes_in
+          - sensor.switch_port_8_bytes_out
+          - sensor.switch_port_8_bytes_in
+          - sensor.switch_port_9_bytes_out
+          - sensor.switch_port_9_bytes_in
+          - sensor.switch_port_10_bytes_out
+          - sensor.switch_port_10_bytes_in
+          - sensor.switch_port_11_bytes_out
+          - sensor.switch_port_11_bytes_in
+          - sensor.switch_port_12_bytes_out
+          - sensor.switch_port_12_bytes_in
+        not_to: ['unknown', 'unavailable']
+      - platform: time_pattern
+        seconds: "/30"
+        sensor:
+      # Port 7 Sensors
+      - name: "Port 7 Download Speed"
+        unique_id: port_7_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_7_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_14_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 14"
-          
-    - name: "Port 14 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_14_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_14_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_14_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_14_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_14_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 14"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_7_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_7_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 7"
+          switch_port: 7
 
-    - name: "Port 15 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_15_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_15_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_15_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_15_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      - name: "Port 7 Upload Speed"
+        unique_id: port_7_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_7_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_15_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 15"
-          
-    - name: "Port 15 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_15_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_15_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_15_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_15_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_15_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 15"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_7_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_7_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 7"
+          switch_port: 7
 
-    - name: "Port 16 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_16_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_16_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_16_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_16_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      # Port 8 Sensors
+      - name: "Port 8 Download Speed"
+        unique_id: port_8_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_8_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_16_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 16"
-          
-    - name: "Port 16 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_16_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_16_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_16_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_16_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_16_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 16"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_8_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_8_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 8"
+          switch_port: 8
 
-     # Ports 17-24
-    - name: "Port 17 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_17_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_17_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_17_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_17_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      - name: "Port 8 Upload Speed"
+        unique_id: port_8_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_8_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_17_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 17"
-          
-    - name: "Port 17 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_17_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_17_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_17_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_17_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_17_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 17"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_8_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_8_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 8"
+          switch_port: 8
 
-    - name: "Port 18 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_18_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_18_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_18_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_18_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      # Port 9 Sensors
+      - name: "Port 9 Download Speed"
+        unique_id: port_9_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_9_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_18_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 18"
-          
-    - name: "Port 18 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_18_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_18_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_18_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_18_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_18_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 18"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_9_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_9_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 9"
+          switch_port: 9
 
-    - name: "Port 19 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_19_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_19_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_19_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_19_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      - name: "Port 9 Upload Speed"
+        unique_id: port_9_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_9_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_19_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 19"
-          
-    - name: "Port 19 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_19_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_19_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_19_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_19_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_19_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 19"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_9_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_9_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 9"
+          switch_port: 9
 
-    - name: "Port 20 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_20_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_20_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_20_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_20_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      # Port 10 Sensors
+      - name: "Port 10 Download Speed"
+        unique_id: port_10_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_10_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_20_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 20"
-          
-    - name: "Port 20 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_20_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_20_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_20_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_20_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_20_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 20"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_10_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_10_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 10"
+          switch_port: 10
 
-    - name: "Port 21 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_21_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_21_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_21_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_21_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      - name: "Port 10 Upload Speed"
+        unique_id: port_10_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_10_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_21_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 21"
-          
-    - name: "Port 21 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_21_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_21_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_21_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_21_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_21_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 21"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_10_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_10_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 10"
+          switch_port: 10
 
-    - name: "Port 22 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_22_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_22_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_22_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_22_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      # Port 11 Sensors
+      - name: "Port 11 Download Speed"
+        unique_id: port_11_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_11_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_22_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 22"
-          
-    - name: "Port 22 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_22_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_22_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_22_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_22_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_22_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 22"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_11_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_11_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 11"
+          switch_port: 11
 
-    - name: "Port 23 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_23_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_23_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_23_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_23_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      - name: "Port 11 Upload Speed"
+        unique_id: port_11_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_11_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_23_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 23"
-          
-    - name: "Port 23 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_23_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_23_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_23_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_23_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_23_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 23"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_11_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_11_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 11"
+          switch_port: 11
 
-    - name: "Port 24 Download Speed"
-      state: >
-          {% if states('sensor.switch_port_24_bytes_out') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_24_bytes_out') | int(0) %}
-            {% set previous = state_attr('sensor.port_24_download_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_24_download_speed') | default(0) }}
-            {% endif %}
-          {% else %}
+      # Port 12 Sensors
+      - name: "Port 12 Download Speed"
+        unique_id: port_12_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_12_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
             0
-          {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_24_bytes_out') | int(0) }}"
-        device_type: "Unknown - Port 24"
-          
-    - name: "Port 24 Upload Speed"
-      state: >
-          {% if states('sensor.switch_port_24_bytes_in') not in ['unavailable', 'unknown'] %}
-            {% set current = states('sensor.switch_port_24_bytes_in') | int(0) %}
-            {% set previous = state_attr('sensor.port_24_upload_speed', 'previous') | default(current) %}
-            {% set time_diff = 30 %}
-            {% if current > previous %}
-              {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
-            {% else %}
-              {{ states('sensor.port_24_upload_speed') | default(0) }}
-            {% endif %}
           {% else %}
-            0
+            {{ this.state | default(0, true) }}
           {% endif %}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network
-      attributes:
-        previous: "{{ states('sensor.switch_port_24_bytes_in') | int(0) }}"
-        device_type: "Unknown - Port 24"
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_12_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_12_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 12"
+          switch_port: 12
 
-      # Total Network Usage Summary
-    - name: "Total Network Download"
-      state: >
+      - name: "Port 12 Upload Speed"
+        unique_id: port_12_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_12_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_12_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_12_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 12"
+          switch_port: 12
+
+  # ===================================================================
+  # PORTS 13-18 BANDWIDTH MONITORING
+  # ===================================================================
+    - trigger:
+      - platform: state
+        entity_id: 
+          - sensor.switch_port_13_bytes_out
+          - sensor.switch_port_13_bytes_in
+          - sensor.switch_port_14_bytes_out
+          - sensor.switch_port_14_bytes_in
+          - sensor.switch_port_15_bytes_out
+          - sensor.switch_port_15_bytes_in
+          - sensor.switch_port_16_bytes_out
+          - sensor.switch_port_16_bytes_in
+          - sensor.switch_port_17_bytes_out
+          - sensor.switch_port_17_bytes_in
+          - sensor.switch_port_18_bytes_out
+          - sensor.switch_port_18_bytes_in
+        not_to: ['unknown', 'unavailable']
+      - platform: time_pattern
+        seconds: "/30"
+        sensor:
+      # Port 13 Sensors
+      - name: "Port 13 Download Speed"
+        unique_id: port_13_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_13_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_13_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_13_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 13"
+          switch_port: 13
+
+      - name: "Port 13 Upload Speed"
+        unique_id: port_13_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_13_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_13_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_13_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 13"
+          switch_port: 13
+
+      # Port 14 Sensors
+      - name: "Port 14 Download Speed"
+        unique_id: port_14_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_14_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_14_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_14_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 14"
+          switch_port: 14
+
+      - name: "Port 14 Upload Speed"
+        unique_id: port_14_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_14_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_14_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_14_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 14"
+          switch_port: 14
+
+      # Port 15 Sensors
+      - name: "Port 15 Download Speed"
+        unique_id: port_15_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_15_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_15_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_15_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 15"
+          switch_port: 15
+
+      - name: "Port 15 Upload Speed"
+        unique_id: port_15_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_15_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_15_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_15_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 15"
+          switch_port: 15
+
+      # Port 16 Sensors
+      - name: "Port 16 Download Speed"
+        unique_id: port_16_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_16_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_16_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_16_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 16"
+          switch_port: 16
+
+      - name: "Port 16 Upload Speed"
+        unique_id: port_16_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_16_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_16_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_16_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 16"
+          switch_port: 16
+
+      # Port 17 Sensors
+      - name: "Port 17 Download Speed"
+        unique_id: port_17_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_17_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_17_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_17_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 17"
+          switch_port: 17
+
+      - name: "Port 17 Upload Speed"
+        unique_id: port_17_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_17_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_17_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_17_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 17"
+          switch_port: 17
+
+      # Port 18 Sensors
+      - name: "Port 18 Download Speed"
+        unique_id: port_18_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_18_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_18_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_18_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 18"
+          switch_port: 18
+
+      - name: "Port 18 Upload Speed"
+        unique_id: port_18_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_18_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_18_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_18_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 18"
+          switch_port: 18
+
+  # ===================================================================
+  # PORTS 19-24 BANDWIDTH MONITORING
+  # ===================================================================
+    - trigger:
+      - platform: state
+        entity_id: 
+          - sensor.switch_port_19_bytes_out
+          - sensor.switch_port_19_bytes_in
+          - sensor.switch_port_20_bytes_out
+          - sensor.switch_port_20_bytes_in
+          - sensor.switch_port_21_bytes_out
+          - sensor.switch_port_21_bytes_in
+          - sensor.switch_port_22_bytes_out
+          - sensor.switch_port_22_bytes_in
+          - sensor.switch_port_23_bytes_out
+          - sensor.switch_port_23_bytes_in
+          - sensor.switch_port_24_bytes_out
+          - sensor.switch_port_24_bytes_in
+        not_to: ['unknown', 'unavailable']
+      - platform: time_pattern
+        seconds: "/30"
+        sensor:
+      # Port 19 Sensors
+      - name: "Port 19 Download Speed"
+        unique_id: port_19_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_19_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_19_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_19_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 19"
+          switch_port: 19
+
+      - name: "Port 19 Upload Speed"
+        unique_id: port_19_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_19_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_19_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_19_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 19"
+          switch_port: 19
+
+      # Port 20 Sensors
+      - name: "Port 20 Download Speed"
+        unique_id: port_20_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_20_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_20_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_20_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 20"
+          switch_port: 20
+
+      - name: "Port 20 Upload Speed"
+        unique_id: port_20_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_20_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_20_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_20_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 20"
+          switch_port: 20
+
+      # Port 21 Sensors
+      - name: "Port 21 Download Speed"
+        unique_id: port_21_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_21_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_21_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_21_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 21"
+          switch_port: 21
+
+      - name: "Port 21 Upload Speed"
+        unique_id: port_21_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_21_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_21_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_21_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 21"
+          switch_port: 21
+
+      # Port 22 Sensors
+      - name: "Port 22 Download Speed"
+        unique_id: port_22_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_22_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_22_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_22_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 22"
+          switch_port: 22
+
+      - name: "Port 22 Upload Speed"
+        unique_id: port_22_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_22_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_22_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_22_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 22"
+          switch_port: 22
+
+      # Port 23 Sensors
+      - name: "Port 23 Download Speed"
+        unique_id: port_23_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_23_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_23_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_23_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 23"
+          switch_port: 23
+
+      - name: "Port 23 Upload Speed"
+        unique_id: port_23_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_23_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_23_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_23_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 23"
+          switch_port: 23
+
+      # Port 24 Sensors
+      - name: "Port 24 Download Speed"
+        unique_id: port_24_download_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_24_bytes_out') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network
+        availability: "{{ has_value('sensor.switch_port_24_bytes_out') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_24_bytes_out') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 24"
+          switch_port: 24
+
+      - name: "Port 24 Upload Speed"
+        unique_id: port_24_upload_speed_fixed
+        state: >
+          {% set current = states('sensor.switch_port_24_bytes_in') | int(0) %}
+          {% set previous = this.attributes.get('previous_bytes', current) %}
+          {% set last_update = this.attributes.get('last_update', now().timestamp()) %}
+          {% set current_time = now().timestamp() %}
+          {% set time_diff = current_time - last_update %}
+          {% if current > previous and time_diff > 0 and time_diff < 300 %}
+            {{ ((current - previous) * 8 / time_diff / 1000000) | round(3) }}
+          {% elif time_diff >= 300 %}
+            0
+          {% else %}
+            {{ this.state | default(0, true) }}
+          {% endif %}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network
+        availability: "{{ has_value('sensor.switch_port_24_bytes_in') }}"
+        attributes:
+          previous_bytes: "{{ states('sensor.switch_port_24_bytes_in') | int(0) }}"
+          last_update: "{{ now().timestamp() }}"
+          device_type: "Unknown - Port 24"
+          switch_port: 24
+
+  # ===================================================================
+  # TOTAL NETWORK BANDWIDTH AGGREGATION
+  # ===================================================================
+    - trigger:
+      - platform: time_pattern
+        seconds: "/30"
+      - platform: state
+        entity_id: 
+          - sensor.port_1_download_speed
+          - sensor.port_2_download_speed
+          - sensor.port_3_download_speed
+          - sensor.port_4_download_speed
+          - sensor.port_5_download_speed
+          - sensor.port_6_download_speed
+          - sensor.port_7_download_speed
+          - sensor.port_8_download_speed
+          - sensor.port_9_download_speed
+          - sensor.port_10_download_speed
+          - sensor.port_11_download_speed
+          - sensor.port_12_download_speed
+          - sensor.port_13_download_speed
+          - sensor.port_14_download_speed
+          - sensor.port_15_download_speed
+          - sensor.port_16_download_speed
+          - sensor.port_17_download_speed
+          - sensor.port_18_download_speed
+          - sensor.port_19_download_speed
+          - sensor.port_20_download_speed
+          - sensor.port_21_download_speed
+          - sensor.port_22_download_speed
+          - sensor.port_23_download_speed
+          - sensor.port_24_download_speed
+        not_to: ['unknown', 'unavailable']
+        sensor:
+      # Total Network Download Speed (Fixed - No Self-Reference)
+      - name: "Total Network Download"
+        unique_id: total_network_download_fixed
+        state: >
           {% set ports = range(1, 25) %}
-          {% set total = 0 %}
+          {% set total = namespace(value=0) %}
           {% for port in ports %}
             {% set sensor_name = 'sensor.port_' ~ port ~ '_download_speed' %}
-            {% if states(sensor_name) not in ['unavailable', 'unknown'] %}
-              {% set total = total + (states(sensor_name) | float(0)) %}
+            {% if has_value(sensor_name) %}
+              {% set total.value = total.value + (states(sensor_name) | float(0)) %}
             {% endif %}
           {% endfor %}
-          {{ total | round(2) }}
-      unit_of_measurement: "Mbps"
-      icon: mdi:download-network-outline
-        
-    - name: "Total Network Upload"
-      state: >
+          {{ total.value | round(2) }}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:download-network-outline
+        attributes:
+          active_ports: >
+            {% set active_ports = [] %}
+            {% for port in range(1, 25) %}
+              {% set sensor_name = 'sensor.port_' ~ port ~ '_download_speed' %}
+              {% if has_value(sensor_name) and states(sensor_name) | float(0) > 0.1 %}
+                {% set active_ports = active_ports + [port] %}
+              {% endif %}
+            {% endfor %}
+            {{ active_ports }}
+          port_count: >
+            {% set active_ports = [] %}
+            {% for port in range(1, 25) %}
+              {% set sensor_name = 'sensor.port_' ~ port ~ '_download_speed' %}
+              {% if has_value(sensor_name) and states(sensor_name) | float(0) > 0.1 %}
+                {% set active_ports = active_ports + [port] %}
+              {% endif %}
+            {% endfor %}
+            {{ active_ports | length }}
+
+      # Total Network Upload Speed (Fixed - No Self-Reference)
+      - name: "Total Network Upload"
+        unique_id: total_network_upload_fixed
+        state: >
           {% set ports = range(1, 25) %}
-          {% set total = 0 %}
+          {% set total = namespace(value=0) %}
           {% for port in ports %}
             {% set sensor_name = 'sensor.port_' ~ port ~ '_upload_speed' %}
-            {% if states(sensor_name) not in ['unavailable', 'unknown'] %}
-              {% set total = total + (states(sensor_name) | float(0)) %}
+            {% if has_value(sensor_name) %}
+              {% set total.value = total.value + (states(sensor_name) | float(0)) %}
             {% endif %}
           {% endfor %}
-          {{ total | round(2) }}
-      unit_of_measurement: "Mbps"
-      icon: mdi:upload-network-outline
+          {{ total.value | round(2) }}
+        unit_of_measurement: "Mbps"
+        device_class: data_rate
+        state_class: measurement
+        icon: mdi:upload-network-outline
+        attributes:
+          active_ports: >
+            {% set active_ports = [] %}
+            {% for port in range(1, 25) %}
+              {% set sensor_name = 'sensor.port_' ~ port ~ '_upload_speed' %}
+              {% if has_value(sensor_name) and states(sensor_name) | float(0) > 0.1 %}
+                {% set active_ports = active_ports + [port] %}
+              {% endif %}
+            {% endfor %}
+            {{ active_ports }}
+          port_count: >
+            {% set active_ports = [] %}
+            {% for port in range(1, 25) %}
+              {% set sensor_name = 'sensor.port_' ~ port ~ '_upload_speed' %}
+              {% if has_value(sensor_name) and states(sensor_name) | float(0) > 0.1 %}
+                {% set active_ports = active_ports + [port] %}
+              {% endif %}
+            {% endfor %}
+            {{ active_ports | length }}
+
+  # ===================================================================
+  # NETWORK MONITORING AND HEALTH SENSORS
+  # ===================================================================
+    - trigger:
+      - platform: time_pattern
+        minutes: "/5"
+        sensor:
+      # High Activity Ports Detection
+      - name: "High Activity Network Ports"
+        unique_id: high_activity_network_ports_fixed
+        state: >
+          {% set high_activity = namespace(count=0) %}
+          {% for port in range(1, 25) %}
+            {% set download_sensor = 'sensor.port_' ~ port ~ '_download_speed' %}
+            {% set upload_sensor = 'sensor.port_' ~ port ~ '_upload_speed' %}
+            {% if has_value(download_sensor) and has_value(upload_sensor) %}
+              {% set download = states(download_sensor) | float(0) %}
+              {% set upload = states(upload_sensor) | float(0) %}
+              {% if download > 1 or upload > 1 %}
+                {% set high_activity.count = high_activity.count + 1 %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          {{ high_activity.count }}
+        unit_of_measurement: "ports"
+        icon: mdi:ethernet
+        attributes:
+          port_details: >
+            {% set high_activity_ports = [] %}
+            {% for port in range(1, 25) %}
+              {% set download_sensor = 'sensor.port_' ~ port ~ '_download_speed' %}
+              {% set upload_sensor = 'sensor.port_' ~ port ~ '_upload_speed' %}
+              {% if has_value(download_sensor) and has_value(upload_sensor) %}
+                {% set download = states(download_sensor) | float(0) %}
+                {% set upload = states(upload_sensor) | float(0) %}
+                {% if download > 1 or upload > 1 %}
+                  {% set high_activity_ports = high_activity_ports + [{
+                    'port': port,
+                    'download_mbps': download | round(2),
+                    'upload_mbps': upload | round(2),
+                    'total_mbps': (download + upload) | round(2)
+                  }] %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {{ high_activity_ports }}
+
+      # Network Health Score
+      - name: "Network Bandwidth Health"
+        unique_id: network_bandwidth_health_fixed
+        state: >
+          {% set total_download = states('sensor.total_network_download') | float(0) %}
+          {% set total_upload = states('sensor.total_network_upload') | float(0) %}
+          {% set total_bandwidth = total_download + total_upload %}
+          {% set excellent_threshold = 100 %}
+          {% set good_threshold = 50 %}
+          {% set fair_threshold = 10 %}
+          {% if total_bandwidth > excellent_threshold %}
+            excellent
+          {% elif total_bandwidth > good_threshold %}
+            good
+          {% elif total_bandwidth > fair_threshold %}
+            fair
+          {% else %}
+            poor
+          {% endif %}
+        icon: >
+          {% set health = states('sensor.network_bandwidth_health') %}
+          {% if health == 'excellent' %}
+            mdi:network-strength-4
+          {% elif health == 'good' %}
+            mdi:network-strength-3
+          {% elif health == 'fair' %}
+            mdi:network-strength-2
+          {% else %}
+            mdi:network-strength-1
+          {% endif %}
+        attributes:
+          total_download_mbps: "{{ states('sensor.total_network_download') | float(0) | round(2) }}"
+          total_upload_mbps: "{{ states('sensor.total_network_upload') | float(0) | round(2) }}"
+          total_bandwidth_mbps: >
+            {{ (states('sensor.total_network_download') | float(0) + 
+                states('sensor.total_network_upload') | float(0)) | round(2) }}
+          active_devices: "{{ states('sensor.high_activity_network_ports') | int(0) }}"
+      
+      
+   
 #-----------------------------------------------------------------------------------------------------------      
 # Template sensors for comprehensive energy analysis
 # Added by Claude.ai on 31 July 2025

@@ -1,0 +1,569 @@
+- trigger:
+    - platform: time_pattern
+      seconds: "/5"
+  sensor:
+# Below Sensors were added for the Sunsynk Integration  
+    - name: "deyeinvertermaster_solar_power_used"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_pv') | float(1) - states('sensor.deyeinvertermaster_solar_power_battery_charge') | float(1)) |round(1) }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertermaster_solar_power_battery_charge"
+      state: "{{ ( states('sensor.deyeinvertermaster_summary_day_battery_charge') | float(1) - states('sensor.deyeinvertermaster_summary_day_battery_charge_grid') | float(1)) | round(1) }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+#---------------------------------------------------------------------------------------      
+
+    #essential = inverter_power_175 + grid_power_169  - aux_power_166
+    - name: "deyeinvertermaster_essential_load"
+      state: "{{ (states('sensor.deyeinvertermaster_inverter_output_power') |float(0)  + (states('sensor.deyeinvertermaster_grid_load_l1') |float(0) - states('sensor.deyeinvertermaster_aux_output_power') |float(0) )) | round(0)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    #nonessential = grid_ct_power_172 - grid_power_167 (L1)
+    - name: "deyeinvertermaster_non_essential_load"
+      state: "{{ (states('sensor.deyeinvertermaster_grid_power_ct_clamp') |float(0)  - (states('sensor.deyeinvertermaster_grid_load_l1') |float(0))) | round(0)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "deyeinvertermaster_priority_charge_or_load"
+      state: |
+        {% if is_state('select.deyeinvertermaster_energy_management_model', 'Battery Priority Mode') %}
+          off
+        {% else %}
+          on
+        {% endif %}
+
+    - name: deyeinvertermaster_battery_charge_grid_power
+      unit_of_measurement: "kW"
+      state_class: measurement
+      device_class: power
+      state: >-
+        {% if states('sensor.deyeinvertermaster_inverter_output_power')|float < 0.0 %}
+        {{ (states('sensor.deyeinvertermaster_battery_output_power') | float(4) | abs ) * 0.001  }}
+        {% else %}
+        0.0
+        {% endif %}
+
+    - name: "deyeinvertermaster_ha_time"
+      state: |
+        {{ now().strftime('%y%m%d%H%M') }}
+
+    ####################Slave
+
+    - name: "deyeinverterslave_solar_power_used"
+      state: "{{ (states('sensor.deyeinverterslave_summary_day_pv') | float(0) - states('sensor.deyeinverterslave_summary_day_battery_charge') | float(0)) |round(1) }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    #essential = deyeinverterslave_power_175 + grid_power_169  - aux_power_166
+    - name: "deyeinverterslave_essential_load"
+      state: "{{ (states('sensor.deyeinverterslave_deyeinverterslave_output_power') |float(0)  + (states('sensor.deyeinverterslave_grid_load') |float(0) - states('sensor.deyeinverterslave_aux_output_power') |float(0) )) | round(0)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    #nonessential = grid_ct_power_172 - grid_power_167 (L1)
+    - name: "deyeinverterslave_non_essential_load"
+      state: "{{ (states('sensor.deyeinverterslave_grid_power_ct_clamp') |float(0)  - (states('sensor.deyeinverterslave_grid_load') |float(0))) | round(0)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "deyeinverterslave_priority_charge_or_load"
+      state: |
+        {% if is_state('select.deyeinverterslave_energy_management_model', 'Battery Priority Mode') %}
+          off
+        {% else %}
+          on
+        {% endif %}
+
+    - name: deyeinverterslave_battery_charge_grid_power
+      unit_of_measurement: "kW"
+      state_class: measurement
+      device_class: power
+      state: >-
+        {% if states('sensor.deyeinverterslave_inverter_output_power')|float < 0.0 %}
+        {{ (states('sensor.deyeinverterslave_battery_output_power') | float(4) | abs ) * 0.001  }}
+        {% else %}
+        0.0
+        {% endif %}
+
+    #Combined entities for the summary view with Master/Slave inverters
+    - name: "deyeinvertercombined_battery_soc"
+      state: |-
+        {% if (has_value('sensor.deyeinvertermaster_battery_soc') and has_value('sensor.deyeinverterslave_battery_soc')) %}
+        {{  (states('sensor.deyeinvertermaster_battery_soc') |float(1)  + (states('sensor.deyeinverterslave_battery_soc') |float(1)))  / 2.0 }}
+        {% else %}
+        {{0.0}}
+        {% endif %}
+      availability: >-
+        {{ (has_value('sensor.deyeinvertermaster_battery_soc') and has_value('sensor.deyeinverterslave_battery_soc')) }}
+      unit_of_measurement: "%"
+      device_class: battery
+
+    - name: "deyeinvertercombined_battery_voltage"
+      state: "{{ (states('sensor.deyeinvertermaster_battery_voltage') |float(1)  + (states('sensor.deyeinverterslave_battery_voltage') |float(1)))  / 2.0 }}"
+      unit_of_measurement: "V"
+      device_class: voltage
+
+    - name: "deyeinvertercombined_summary_day_battery_charge"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_battery_charge') |float(0)  + (states('sensor.deyeinverterslave_summary_day_battery_charge') |float(0))) | round(1)}}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_day_load"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_load') |float(0)  + (states('sensor.deyeinverterslave_summary_day_load') |float(0))) | round(1) }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      availability: >-
+        {{ (has_value('sensor.deyeinvertermaster_summary_day_load') and has_value('sensor.deyeinverterslave_summary_day_load')) }}
+
+    - name: "deyeinvertercombined_summary_day_battery_discharge"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_battery_discharge') |float(0)  + (states('sensor.deyeinverterslave_summary_day_battery_discharge') |float(0))) | round(1)}}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_day_pv"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_pv') |float(0)  + (states('sensor.deyeinverterslave_summary_day_pv') |float(0))) | round(1)}}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      availability: >-
+        {{ (has_value('sensor.deyeinvertermaster_summary_day_pv') and has_value('sensor.deyeinverterslave_summary_day_pv')) }}
+
+    - name: "deyeinvertercombined_summary_day_pv1"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_pv1') |float(0)  + (states('sensor.deyeinverterslave_summary_day_pv1') |float(0))) | round(1)}}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_day_pv2"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_pv2') |float(0)  + (states('sensor.deyeinverterslave_summary_day_pv2') |float(0))) | round(1)}}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_day_pv3"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_pv3') |float(0)  + (states('sensor.deyeinverterslave_summary_day_pv3') |float(0))) | round(1)}}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_day_pv4"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_pv4') |float(0)  + (states('sensor.deyeinverterslave_summary_day_pv4') |float(0))) | round(1)}}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_day_grid_import_buy"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_grid_import_buy') |float(0))}}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_day_grid_import_buy_half"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_grid_import_buy') |float(0) / 2.0)}}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_day_grid_export_sell"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_day_grid_export_sell') |float(0) / 2.0)}}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_total_pv"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_total_pv') |float(3)  + (states('sensor.deyeinverterslave_summary_total_pv') |float(3))) | round(4)}}"
+      unit_of_measurement: "MWh"
+      device_class: energy
+      state_class: total_increasing
+      availability: >-
+        {{ (has_value('sensor.deyeinvertermaster_summary_total_pv') and has_value('sensor.deyeinverterslave_summary_total_pv')) }}
+
+    - name: "deyeinvertercombined_summary_total_load"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_total_load') |float(3)  + (states('sensor.deyeinverterslave_summary_total_load') |float(3))) | round(4)}}"
+      unit_of_measurement: "MWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_total_grid_import_buy"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_total_grid_import_buy') |float(3)) | round(4)}}"
+      unit_of_measurement: "MWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_total_grid_export_sell"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_total_grid_export_sell') |float(3)) | round(4)}}"
+      unit_of_measurement: "MWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_total_battery_discharge"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_total_battery_discharge') |float(3)  + (states('sensor.deyeinverterslave_summary_total_battery_discharge') |float(3))) | round(4)}}"
+      unit_of_measurement: "MWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_summary_total_battery_charge"
+      state: "{{ (states('sensor.deyeinvertermaster_summary_total_battery_charge') |float(3)  + (states('sensor.deyeinverterslave_summary_total_battery_charge') |float(3))) | round(4)}}"
+      unit_of_measurement: "MWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_essential_load"
+      state: "{{ (states('sensor.deyeinvertermaster_essential_load') |float(0) + (states('sensor.deyeinverterslave_essential_load') |float(0))) | round(1)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "deyeinvertercombined_grid_load"
+      state: "{{ (states('sensor.deyeinvertermaster_grid_load') |float(0) + (states('sensor.deyeinverterslave_grid_load') |float(0))) | round(1)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "deyeinvertercombined_inverter_output_power"
+      state: "{{ (states('sensor.deyeinvertermaster_inverter_output_power') |float(0)  + (states('sensor.deyeinverterslave_inverter_output_power') |float(0))) | round(1)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "deyeinvertercombined_battery_output_power"
+      state: "{{ (states('sensor.deyeinvertermaster_battery_output_power') |float(0)  + (states('sensor.deyeinverterslave_battery_output_power') |float(0))) | round(1)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "deyeinvertercombined_solar_power_used"
+      state: "{{ (states('sensor.deyeinvertermaster_solar_power_used') |float(0)  + (states('sensor.deyeinverterslave_solar_power_used') |float(0))) | round(1)}}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "deyeinvertercombined_pv_power"
+      state: "{{ (states('sensor.deyeinvertermaster_pv_power') |float(0)  + (states('sensor.deyeinverterslave_pv_power') |float(0))) | round(1)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      availability: >-
+        {{ (has_value('sensor.deyeinvertermaster_pv_power') and has_value('sensor.deyeinverterslave_pv_power')) }}
+
+    - name: "deyeinvertercombined_pv1_power"
+      state: "{{ (states('sensor.deyeinvertermaster_pv1_power') |float(0)  + (states('sensor.deyeinverterslave_pv1_power') |float(0))) | round(1)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "deyeinvertercombined_pv2_power"
+      state: "{{ (states('sensor.deyeinvertermaster_pv2_power') |float(0)  + (states('sensor.deyeinverterslave_pv2_power') |float(0))) | round(1)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "deyeinvertercombined_pv3_power"
+      state: "{{ (states('sensor.deyeinvertermaster_pv3_power') |float(0)  + (states('sensor.deyeinverterslave_pv3_power') |float(0))) | round(1)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "deyeinvertercombined_pv4_power"
+      state: "{{ (states('sensor.deyeinvertermaster_pv4_power') |float(0)  + (states('sensor.deyeinverterslave_pv4_power') |float(0))) | round(1)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "deyeinvertercombined_grid_power_ct_clamp"
+      state: "{{ states('sensor.deyeinvertermaster_grid_power_ct_clamp') |float(0) + states('sensor.deyeinverterslave_grid_power_ct_clamp') |float(1) }}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: "deyeinvertercombined_battery_output_current"
+      state: "{{ (states('sensor.deyeinvertermaster_battery_output_current') |float(0)  + (states('sensor.deyeinverterslave_battery_output_current') |float(0))) | round(1)}}"
+      unit_of_measurement: "A"
+      device_class: current
+      state_class: measurement
+
+    - name: "deyeinvertercombined_non_essential_load"
+      state: "{{ (states('sensor.deyeinvertermaster_non_essential_load') |float(0)  - (states('sensor.deyeinverterslave_non_essential_load') |float(0))) | round(1)}}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    - name: deyeinvertercombined_battery_charge_grid_power
+      unit_of_measurement: "kW"
+      state_class: measurement
+      device_class: power
+      state: >-
+        {% if states('sensor.deyeinvertercombined_inverter_output_power')|float < 0.0 %}
+        {{ (states('sensor.deyeinvertercombined_battery_output_power') | float(4) | abs ) * 0.001  }}
+        {% else %}
+        0.0
+        {% endif %}
+
+# Sensors below being created & added         
+# added on 10 July 2025 @12h50
+# Code Link 1.1 in sensor.yaml
+    - name: "Plugs 2 Energy"
+      state: "{{ states('sensor.plugs_2_energy') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing    
+
+    - name: "Plugs 1 Energy"
+      state: "{{ states('sensor.plugs_1_energy') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing      
+
+    - name: "Plugs 3 Energy"
+      state: "{{ states('sensor.plugs_2_energy') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing  
+      
+    - name: "Woonstel Energy"
+      state: "{{ states('sensor.woonstel_energy') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing  
+
+    - name: "Geyser New Energy"
+      state: "{{ states('sensor.geyser_new_energy') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing  
+
+    - name: "Geyser External Energy"
+      state: "{{ states('sensor.geyser_external_energy') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing  
+
+    - name: "Pool Pump Energy"
+      state: "{{ states('sensor.pool_pump_energy') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "Study Energy"
+      state: "{{ states('sensor.study_energy') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "Salon Energy"
+      state: "{{ states('sensor.salon_energy') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "Boorgat Energy"
+      state: "{{ states('sensor.boorgat_energy') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+#------------------------------------------------------------------------------------------------------------------------
+# Add by Co-Pilot to creates a sensor whose state is a list of all sensor entity IDs
+    - name: "sensor_list"
+      state: "{{ states.sensor | map(attribute='entity_id') | list }}"
+#-----------------------------------------------------------------------------------------------------------
+#MetroFibre Router Uptime
+#Added by Claude.ai on 30 July 2025
+ # Template Sensors for Uptime Calculation
+    - name: "MetroFibre Router Uptime"
+      state: >
+        {% if is_state('binary_sensor.metrofibre_router', 'on') %}
+          {{ ((as_timestamp(now()) - as_timestamp(states.binary_sensor.metrofibre_router.last_changed)) / 3600) | round(2) }}
+        {% else %}
+          0
+        {% endif %}
+      unit_of_measurement: "hours"
+      icon: mdi:clock-outline
+        
+    - name: "Network Status Summary"
+      state: >
+        {% set routers = [
+          'binary_sensor.metrofibre_router',
+          'binary_sensor.tplink_eap245',
+          'binary_sensor.netgear_genie',
+          'binary_sensor.tplinl_archer_d2',
+          'binary_sensor.tplink_eap225_outdoo',
+          'binary_sensor.netgear_gs728tp'
+        ] %}
+        {% set online = routers | select('is_state', 'on') | list | length %}
+        {% set total = routers | length %}
+        {{ (online / total * 100) | round(1) }}
+      unit_of_measurement: "%"
+      icon: mdi:network-strength-4
+#-----------------------------------------------------------------------------------------------------------          
+# Device-specific bandwidth calculation
+# Added by Claude. trigger:
+# Trigger on SNMP sensor state changes
+    - trigger:
+# Trigger on SNMP sensor state changes
+      - platform: state
+        entity_id: 
+          - sensor.switch_port_1_bytes_out
+          - sensor.switch_port_1_bytes_in
+        not_to: 
+          - 'unknown'
+          - 'unavailable'
+# Also trigger every 30 seconds to ensure regular updates  
+      - platform: time_pattern
+        seconds: "/30"
+
+#-----------------------------------------------------------------------------------------------------------
+ 
+#-----------------------------------------------------------------------------------------------------------                  
+# Template sensors for real-time bandwidth calculation (Add to configuration.yaml)
+# Added by Claude.ai on 30 July 2025
+      # Port 1 Bandwidth
+   
+#-----------------------------------------------------------------------------------------------------------      
+# Template sensors for comprehensive energy analysis
+# Added by Claude.ai on 31 July 2025
+# Current Power in kW
+    - name: "Current Power Usage kW"
+      state: >
+        {{ (states('sensor.efergy_power_usage') | float / 1000) | round(3) }}
+      unit_of_measurement: "kW"
+      device_class: power
+      icon: mdi:flash
+    
+    # Hourly Cost
+    - name: "Energy Cost Hourly"
+      state: >
+        {{ (states('sensor.energy_hourly') | float * states('input_number.electricity_rate') | float) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+      attributes:
+        usage_kwh: "{{ states('sensor.energy_hourly') }}"
+        rate: "{{ states('input_number.electricity_rate') }}"
+    
+    # Daily Cost
+    - name: "Energy Cost Daily"
+      state: >
+        {% set usage = states('sensor.energy_daily') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float %}
+        {{ ((usage * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+      attributes:
+        usage_kwh: "{{ states('sensor.energy_daily') }}"
+        energy_cost: "{{ (states('sensor.energy_daily') | float * states('input_number.electricity_rate') | float) | round(2) }}"
+        connection_fee: "{{ states('input_number.daily_connection_fee') }}"
+    
+    # Weekly Cost
+    - name: "Energy Cost Weekly"
+      state: >
+        {% set usage = states('sensor.energy_weekly') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float * 7 %}
+        {{ ((usage * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+    
+    # Monthly Cost
+    - name: "Energy Cost Monthly"
+      state: >
+        {% set usage = states('sensor.energy_monthly') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float * 30 %}
+        {{ ((usage * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+      attributes:
+        usage_kwh: "{{ states('sensor.energy_monthly') }}"
+        projected_annual: "{{ (states('sensor.energy_cost_monthly') | float * 12) | round(2) }}"
+    
+    # Quarterly Cost
+    - name: "Energy Cost Quarterly"
+      state: >
+        {% set usage = states('sensor.energy_quarterly') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float * 90 %}
+        {{ ((usage * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+    
+    # Yearly Cost
+    - name: "Energy Cost Yearly"
+      state: >
+        {% set usage = states('sensor.energy_yearly') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float * 365 %}
+        {{ ((usage * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:currency-usd
+    
+    # Comparison Sensors
+    - name: "Daily Usage Comparison"
+      state: >
+        {% set today = states('sensor.energy_daily') | float %}
+        {% set yesterday = states('sensor.energy_daily_previous') | float %}
+        {% if yesterday > 0 %}
+          {{ (((today - yesterday) / yesterday) * 100) | round(1) }}
+        {% else %}
+          0
+        {% endif %}
+      unit_of_measurement: "%"
+      icon: mdi:compare-horizontal
+      attributes:
+        today_kwh: "{{ states('sensor.energy_daily') }}"
+        yesterday_kwh: "{{ states('sensor.energy_daily_previous') }}"
+        difference_kwh: "{{ (states('sensor.energy_daily') | float - states('sensor.energy_daily_previous') | float) | round(2) }}"
+    
+    - name: "Monthly Usage Comparison"
+      state: >
+        {% set current = states('sensor.energy_monthly') | float %}
+        {% set previous = states('sensor.energy_monthly_previous') | float %}
+        {% if previous > 0 %}
+          {{ (((current - previous) / previous) * 100) | round(1) }}
+        {% else %}
+          0
+        {% endif %}
+      unit_of_measurement: "%"
+      icon: mdi:compare-horizontal
+    
+    # Efficiency Metrics
+    - name: "Average Daily Usage"
+      state: >
+        {% set monthly = states('sensor.energy_monthly') | float %}
+        {% set days = now().day %}
+        {{ (monthly / days) | round(2) }}
+      unit_of_measurement: "kWh/day"
+      icon: mdi:chart-line
+    
+    - name: "Projected Monthly Cost"
+      state: >
+        {% set daily_avg = states('sensor.average_daily_usage') | float %}
+        {% set rate = states('input_number.electricity_rate') | float %}
+        {% set connection_fee = states('input_number.daily_connection_fee') | float * 30 %}
+        {{ ((daily_avg * 30 * rate) + connection_fee) | round(2) }}
+      unit_of_measurement: "R"
+      icon: mdi:trending-up
+#-----------------------------------------------------------------------------------------------------------            
+
+
+
+
+
+
+
+
+
+

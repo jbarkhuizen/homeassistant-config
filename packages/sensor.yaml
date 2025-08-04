@@ -696,19 +696,22 @@ sensor:
     scan_interval: 30
 
 #------------------------------------------------------------------------------------------------------------------------    
+# Network Changes
+# Added by claude.ai on 4 Aug 2025
 binary_sensor:
   - platform: template
     sensors:
       network_congestion:
         friendly_name: "Network Congestion Detected"
         value_template: >
-          {{ states('sensor.speedtest_download') | float < 
-             (states('sensor.speedtest_download') | float * 0.7) }}
+          {% set current_speed = states('sensor.speedtest_download') | float(0) %}
+          {% set threshold = current_speed * 0.7 %}
+          {{ current_speed > 0 and current_speed < threshold }}
+        availability_template: >
+          {{ has_value('sensor.speedtest_download') }}
         icon_template: >
           {% if is_state('binary_sensor.network_congestion', 'on') %}
             mdi:network-strength-1
           {% else %}
             mdi:network-strength-4
-          {% endif %}    
-    
-    
+          {% endif %}

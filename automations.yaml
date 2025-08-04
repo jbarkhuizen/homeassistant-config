@@ -154,8 +154,12 @@
   condition:
     - condition: template
       value_template: >
-        {{ states('sensor.speedtest_download') | float < 250 or 
-           states('sensor.speedtest_upload') | float < 250 }}
+        {{ states('sensor.speedtest_download') | float(0) < 250 or 
+           states('sensor.speedtest_upload') | float(0) < 250 }}
+    - condition: template
+      value_template: >
+        {{ has_value('sensor.speedtest_download') and 
+           has_value('sensor.speedtest_upload') }}
     - condition: state
       entity_id: input_boolean.network_monitoring_enabled
       state: 'on'
@@ -212,6 +216,6 @@
   action:
     - service: speedtestdotnet.setup
       data:
-        scan_interval:
-          hours: "{{ states('input_number.speedtest_interval') | float }}"          
+         scan_interval:
+              hours: "{{ states('input_number.speedtest_interval') | float(1) }}"   
 #---------------------------------------------------------------------------------------

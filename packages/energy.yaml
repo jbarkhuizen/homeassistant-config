@@ -31,10 +31,3 @@ input_number:
     icon: mdi:currency-usd
 
 #------------------------------------------------------------------------------------------------------------------------------------------------
-# Network Integration Settings
-input_boolean:
-  network_monitoring_enabled:
-    name: "Network Monitoring Enabled"
-    initial: true
-    icon: mdi:network
-#------------------------------------------------------------------------------------------------------------------------------------------------

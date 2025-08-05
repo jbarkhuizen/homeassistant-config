@@ -1,34 +1,40 @@
-# Energy Cost Management
-# Added by Claude.ai on 31 July 2025
-homeassistant: 
+#------------------------------------------------------------------------------------------------------------------------------------------------
+# Energy Cost Calculation Input Helpers - MISSING ENTITIES FIX
+# Added by Claude.ai on 05 August 2025
+#------------------------------------------------------------------------------------------------------------------------------------------------
 input_number:
+  speedtest_interval:
+    name: "Speedtest Interval (hours)"
+    min: 0.5
+    max: 24
+    step: 0.5
+    initial: 1
+    icon: mdi:speedometer
+
+  # NEW - Required for energy cost calculations
   electricity_rate:
-    name: "Electricity Rate (per kWh)"
+    name: "Electricity Rate (R per kWh)"
     min: 0
     max: 10
     step: 0.01
-    initial: 1.65  # Set your actual rate
+    initial: 4.09  # Adjust to your actual rate
     unit_of_measurement: "R/kWh"
     icon: mdi:currency-usd
-#------------------------------------------------------------------------------------------------------------------------------------------------  
-# Added by Claude.ai on 31 July 2025
+
   daily_connection_fee:
     name: "Daily Connection Fee"
     min: 0
     max: 50
     step: 0.01
-    initial: 12.50  # Set your actual daily fee
-    unit_of_measurement: "R/day"
-    icon: mdi:transmission-tower
-#------------------------------------------------------------------------------------------------------------------------------------------------  
-# Added by Claude.ai on 31 July 2025
-input_select:
-  electricity_tariff_type:
-    name: "Tariff Type"
-    options:
-      - "Standard"
-      - "Time of Use"
-      - "Peak/Off-Peak"
-    initial: "Standard"
-    icon: mdi:clock-time-four
-#------------------------------------------------------------------------------------------------------------------------------------------------  
+    initial: 0.00  # Adjust to your actual daily fee
+    unit_of_measurement: "R"
+    icon: mdi:currency-usd
+
+#------------------------------------------------------------------------------------------------------------------------------------------------
+# Network Integration Settings
+input_boolean:
+  network_monitoring_enabled:
+    name: "Network Monitoring Enabled"
+    initial: true
+    icon: mdi:network
+#------------------------------------------------------------------------------------------------------------------------------------------------

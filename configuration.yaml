@@ -62,7 +62,12 @@ input_number:
     initial: 1
     icon: mdi:speedometer
 #------------------------------------------------------------------------------------------------------------------------------------------------      
-
+logger:
+  default: info
+  logs:
+    homeassistant.components.smtp: debug
+    homeassistant.components.notify: debug
+    homeassistant.components.automation: info
 #------------------------------------------------------------------------------------------------------------------------------------------------  
 # Network Integration Settings
 # Input Helpers for Configuration

@@ -715,3 +715,88 @@ binary_sensor:
           {% else %}
             mdi:network-strength-4
           {% endif %}
+#------------------------------------------------------------------------------------------------------------------------
+# Network Device Ping Monitoring - MISSING ENTITIES
+# Added to fix automation issues - Created by Claude.ai on 05 August 2025
+#------------------------------------------------------------------------------------------------------------------------
+  - platform: template
+    sensors:
+      network_congestion:
+        friendly_name: "Network Congestion Detected"
+        value_template: >
+          {{ states('sensor.speedtest_download') | float < 
+             (states('sensor.speedtest_download') | float * 0.7) }}
+        icon_template: >
+          {% if is_state('binary_sensor.network_congestion', 'on') %}
+            mdi:network-strength-1
+          {% else %}
+            mdi:network-strength-4
+          {% endif %}
+
+  # Network Device Ping Sensors - MAIN ENTITIES FOR AUTOMATIONS
+  - platform: ping
+    host: 192.168.1.1
+    name: "MetroFibre Router"
+    count: 2
+    scan_interval: 30
+    
+  - platform: ping
+    host: 192.168.1.3
+    name: "TP-Link EAP245"
+    count: 2
+    scan_interval: 30
+    
+  - platform: ping
+    host: 192.168.1.4
+    name: "Netgear Genie"
+    count: 2
+    scan_interval: 30
+    
+  - platform: ping
+    host: 192.168.1.5
+    name: "TP-Link Archer D2"
+    count: 2
+    scan_interval: 30
+    
+  - platform: ping
+    host: 192.168.1.8
+    name: "TP-Link EAP225 Outdoor"
+    count: 2
+    scan_interval: 30
+    
+  - platform: ping
+    host: 192.168.1.9
+    name: "Netgear GS728TP"
+    count: 2
+    scan_interval: 30
+
+  # Additional Ping Sensors for Device-Specific Monitoring  
+  - platform: ping
+    host: 192.168.1.3
+    name: "TP-Link EAP245 Ping"
+    count: 2
+    scan_interval: 60
+    
+  - platform: ping
+    host: 192.168.1.4
+    name: "Netgear Genie Ping"
+    count: 2
+    scan_interval: 60
+    
+  - platform: ping
+    host: 192.168.1.5
+    name: "TP-Link Archer D2 Ping"
+    count: 2
+    scan_interval: 60
+    
+  - platform: ping
+    host: 192.168.1.8
+    name: "TP-Link EAP225 Outdoor Ping"
+    count: 2
+    scan_interval: 60
+    
+  - platform: ping
+    host: 192.168.1.9
+    name: "Netgear GS728TP Ping"
+    count: 2
+    scan_interval: 60          

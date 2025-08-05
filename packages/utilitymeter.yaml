@@ -1,5 +1,9 @@
+#----------------------------------------------------------------------------------------------------------------------
+# Utility Meters for Energy Tracking - USING EXISTING EFERGY SENSORS
+# Updated by Claude.ai on 05 August 2025 - Uses existing Efergy energy sensors
+#----------------------------------------------------------------------------------------------------------------------
 utility_meter:
-# Below Sensors is applicable to the Sunsynk Inverters
+  # Below Sensors is applicable to the Sunsynk Inverters
   master_energy_battery_charge_grid:
     name: deyeinvertermaster_summary_day_battery_charge_grid
     source: sensor.deyeinvertermaster_summary_total_battery_charge_grid
@@ -8,54 +12,61 @@ utility_meter:
   slave_energy_battery_charge_grid:
     name: deyeinverterslave_summary_day_battery_charge_grid
     source: sensor.deyeinverterslave_summary_total_battery_charge_grid
-    cycle:
-      daily
-#----------------------------------------------------------------------------------------------------------------------      
-# Utility Meters for Energy Tracking
-# Added by Claude.ai on 31 July 2025
-  # Hourly tracking
-  energy_hourly:
-    source: sensor.efergy_power_usage
-    cycle: hourly
-    name: "Energy Usage Hourly"
-
-  # Daily tracking
-  energy_daily:
-    source: sensor.efergy_power_usage
     cycle: daily
-    name: "Energy Usage Daily"
 
-  # Weekly tracking
-  energy_weekly:
-    source: sensor.efergy_power_usage
-    cycle: weekly
-    name: "Energy Usage Weekly"
+#----------------------------------------------------------------------------------------------------------------------
+# Create sensor.energy_daily as an alias to existing Efergy sensor
+# This creates the missing sensor.energy_daily that your automations need
+#----------------------------------------------------------------------------------------------------------------------
+template:
+  - sensor:
+    # Create sensor.energy_daily using existing Efergy sensor
+    - name: "Energy Daily"
+      state: "{{ states('sensor.efergy_daily_consumption') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      icon: mdi:flash
 
-  # Monthly tracking
-  energy_monthly:
-    source: sensor.efergy_power_usage
-    cycle: monthly
-    name: "Energy Usage Monthly"
+    # Create sensor.energy_weekly (if needed)
+    - name: "Energy Weekly"
+      state: "{{ states('sensor.efergy_weekly_consumption') | default('0') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      icon: mdi:flash
 
-  # Quarterly tracking
-  energy_quarterly:
-    source: sensor.efergy_power_usage
-    cycle: quarterly
-    name: "Energy Usage Quarterly"
+    # Create sensor.energy_monthly using existing Efergy sensor
+    - name: "Energy Monthly"
+      state: "{{ states('sensor.efergy_monthly_consumption') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      icon: mdi:flash
 
-  # Yearly tracking
-  energy_yearly:
-    source: sensor.efergy_power_usage
-    cycle: yearly
-    name: "Energy Usage Yearly"
+    # Create sensor.energy_yearly using existing Efergy sensor
+    - name: "Energy Yearly"
+      state: "{{ states('sensor.efergy_yearly_consumption') }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      icon: mdi:flash
 
-  # Alternative tracking for comparisons (using different cycles)
-  energy_daily_alt:
-    source: sensor.efergy_power_usage
-    cycle: daily
-    name: "Energy Usage Daily Alt"
+    # Create hourly and quarterly if needed
+    - name: "Energy Hourly"
+      state: >
+        {% set daily = states('sensor.efergy_daily_consumption') | float %}
+        {% set hour = now().hour %}
+        {{ (daily / 24 * (hour + 1)) | round(2) }}
+      unit_of_measurement: "kWh"
+      device_class: energy
+      icon: mdi:flash
 
-  energy_monthly_alt:
-    source: sensor.efergy_power_usage
-    cycle: monthly
-    name: "Energy Usage Monthly Alt"
+    - name: "Energy Quarterly"
+      state: >
+        {% set yearly = states('sensor.efergy_yearly_consumption') | float %}
+        {% set quarter = ((now().month - 1) // 3) + 1 %}
+        {{ (yearly / 4 * quarter) | round(2) }}
+      unit_of_measurement: "kWh"
+      device_class: energy
+      icon: mdi:flash

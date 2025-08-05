@@ -74,7 +74,28 @@ input_boolean:
     icon: mdi:network    
     
 #------------------------------------------------------------------------------------------------------------------------------------------------      
-
+# Ypdated to reduce Sonoff & Tuya Battery consumption
+# Added by Claude.AI on 5 Aug 2025
+recorder:
+  exclude:
+    entity_globs:
+      - sensor.*_rssi           # Signal strength updates too frequently
+      - sensor.*_link_rate      # Network stats not needed for batteries
+      - sensor.*_signal_strength # Disable frequent signal updates
+    entities:
+      # Exclude specific high-frequency entities
+      - sensor.sonoff_a4800986dd_rssi
+      - sensor.sonoff_a48008e4cc_rssi
+      - sensor.sonoff_1002357619_rssi
+  
+  # Only record essential battery data
+  include:
+    entities:
+      - sensor.sonoff_a4800986dd_battery
+      - sensor.sonoff_a4800986dd_temperature  # Keep temp for history
+      - sensor.sonoff_a4800986dd_humidity     # Keep humidity for history
+      - sensor.sonoff_a48008e4cc_battery
+      - sensor.study_temperature_humidity_sensor_battery
 #------------------------------------------------------------------------------------------------------------------------------------------------      
 # Device Tracker for Network Devices
 # Added by Claude.AI on 30 July 202

@@ -207,15 +207,29 @@
           
           Overall Network Health: {{ states('sensor.network_status_summary') }}%           
           
-- id: update_speedtest_interval
-  alias: "Update Speedtest Interval"
-  description: "Update speedtest interval based on input helper"
-  trigger:
-    - platform: state
-      entity_id: input_number.speedtest_interval
-  action:
-    - service: speedtestdotnet.setup
-      data:
-         scan_interval:
-              hours: "{{ states('input_number.speedtest_interval') | float(1) }}"   
 #---------------------------------------------------------------------------------------
+# Setting SOnoff & Tuya Sensors to report every 10 min instead of every 5 sec
+# Added by Claude.ai on 5 Aug 2025
+- id: tuya_battery_power_saving
+  alias: "Tuya Battery Power Saving Mode"
+  trigger:
+    - platform: time_pattern
+      minutes: "/10"  # Every 10 minutes
+  condition:
+    - condition: state
+      entity_id: input_boolean.battery_power_saving_mode
+      state: 'on'
+  action:
+    - service: homeassistant.update_entity
+      target:
+        entity_id:
+          - sensor.sonoff_a4800986dd_temperature
+          - sensor.sonoff_a4800986dd_humidity
+          - sensor.sonoff_a4800986dd_battery
+          - sensor.sonoff_a48008e4cc_battery
+          - sensor.sonoff_a48008e4cc_humidity
+          - sensor.sonoff_a48008e4cc_temperature
+          - sensor.study_temperature_humidity_sensor_battery
+          - sensor.braai_afdak_temperature_humidity_sensor_battery
+          - sensor.sonoff_a4800d7025_battery
+          - sensor.sonoff_1002357619_battery

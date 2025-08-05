@@ -1,6 +1,6 @@
 - trigger:
     - platform: time_pattern
-      seconds: "/5"
+      minutes: "/10"
   sensor:
 # Below sensors were identified to be duplicated for Sunsynk in the smartdeyedongle.yaml
 #Commented out on 4 Aug 2025

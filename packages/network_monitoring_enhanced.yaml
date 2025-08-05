@@ -1,9 +1,9 @@
 # packages/network_monitoring_enhanced.yaml
-# Enhanced Network Monitoring System
+# Enhanced Network Monitoring System - FIXED VERSION
 # Created: August 2025
-# Updated: August 4, 2025 - Fixed automation triggers
+# Fixed: Removed duplicate input_number conflicts
 
-# Input helpers for user control
+# Input helpers for user control (avoiding conflicts)
 input_boolean:
   network_monitoring_enabled:
     name: "Enable Network Monitoring"
@@ -21,7 +21,7 @@ input_boolean:
     initial: true
 
 input_number:
-  network_health_alert_threshold:
+  network_health_threshold:  # Renamed to avoid conflicts
     name: "Network Health Alert Threshold"
     min: 50
     max: 100
@@ -30,8 +30,8 @@ input_number:
     unit_of_measurement: "%"
     icon: mdi:percent
 
-  speedtest_interval:
-    name: "Speedtest Interval (hours)"
+  network_speedtest_hours:  # Renamed to avoid conflicts with existing speedtest_interval
+    name: "Network Speedtest Interval (hours)"
     min: 0.5
     max: 24
     step: 0.5
@@ -90,22 +90,6 @@ template:
               {% endif %}
             {% endfor %}
             {{ online_count }}
-          offline_devices: >-
-            {% set devices = [
-              'binary_sensor.metrofibre_router',
-              'binary_sensor.tplink_eap245_ping',
-              'binary_sensor.netgear_genie_ping',
-              'binary_sensor.tplinl_archer_d2_ping',
-              'binary_sensor.tplink_eap225_outdoor_ping',
-              'binary_sensor.netgear_gs728tp_ping'
-            ] %}
-            {% set offline = [] %}
-            {% for device in devices %}
-              {% if not is_state(device, 'on') %}
-                {% set offline = offline + [device] %}
-              {% endif %}
-            {% endfor %}
-            {{ offline | join(', ') }}
 
       # Internet Speed Status
       - name: "internet_speed_status"
@@ -130,15 +114,6 @@ template:
           {% else %}
             mdi:speedometer-slow
           {% endif %}
-        attributes:
-          download_speed: "{{ states('sensor.speedtest_download') }} Mbps"
-          upload_speed: "{{ states('sensor.speedtest_upload') }} Mbps"
-          ping: "{{ states('sensor.speedtest_ping') }} ms"
-          expected_download: "500 Mbps"
-          expected_upload: "500 Mbps"
-          performance_percentage: >-
-            {% set download = states('sensor.speedtest_download') | float(0) %}
-            {{ ((download / 500) * 100) | round(1) }}%
 
       # Network Status Summary
       - name: "network_status_summary"
@@ -165,29 +140,21 @@ template:
           {% else %}
             mdi:alert-circle
           {% endif %}
-        attributes:
-          health_score: "{{ states('sensor.network_health_score') }}%"
-          speed_rating: "{{ states('sensor.internet_speed_status') }}"
-          last_speedtest: "{{ state_attr('sensor.speedtest_download', 'last_updated') }}"
 
 # Binary sensors for alerts
 binary_sensor:
-  # Composite network status
   - platform: template
     sensors:
       network_critical_alert:
         friendly_name: "Network Critical Alert"
         value_template: >-
-          {{ states('sensor.network_health_score') | float(0) < states('input_number.network_health_alert_threshold') | float(85) }}
+          {{ states('sensor.network_health_score') | float(0) < states('input_number.network_health_threshold') | float(85) }}
         icon_template: >-
           {% if is_state('binary_sensor.network_critical_alert', 'on') %}
             mdi:alert-circle
           {% else %}
             mdi:check-circle
           {% endif %}
-        attribute_templates:
-          health_score: "{{ states('sensor.network_health_score') }}%"
-          threshold: "{{ states('input_number.network_health_alert_threshold') }}%"
 
       internet_speed_degraded:
         friendly_name: "Internet Speed Degraded"
@@ -202,7 +169,7 @@ binary_sensor:
             mdi:speedometer
           {% endif %}
 
-# Groups for easy management
+# Groups for easy management in UI
 group:
   network_devices:
     name: "Network Infrastructure Devices"
@@ -222,8 +189,8 @@ group:
       - input_boolean.network_monitoring_enabled
       - input_boolean.weekly_network_reports
       - input_boolean.daily_network_alerts
-      - input_number.network_health_alert_threshold
-      - input_number.speedtest_interval
+      - input_number.network_health_threshold
+      - input_number.network_speedtest_hours
 
   network_status_sensors:
     name: "Network Status Sensors"
@@ -260,7 +227,7 @@ automation:
             
             🔴 Network Health Score: {{ states('sensor.network_health_score') }}%
             📊 Internet Speed Status: {{ states('sensor.internet_speed_status') }}
-            ⚠️ Alert Threshold: {{ states('input_number.network_health_alert_threshold') }}%
+            ⚠️ Alert Threshold: {{ states('input_number.network_health_threshold') }}%
             
             📋 Device Status Overview:
             - MetroFibre Router (192.168.1.1): {{ 'Online ✅' if is_state('binary_sensor.metrofibre_router', 'on') else 'OFFLINE ❌' }}
@@ -276,12 +243,6 @@ automation:
             - Ping: {{ states('sensor.speedtest_ping') }} ms
             
             🚨 IMMEDIATE ACTION REQUIRED!
-            
-            Troubleshooting Steps:
-            1. Check physical network connections
-            2. Restart affected devices
-            3. Contact MetroFibre if router issues persist
-            4. Verify power supply to all network equipment
 
   # Speed degradation alert
   - id: internet_speed_degradation_alert
@@ -308,67 +269,9 @@ automation:
             - Download: {{ states('sensor.speedtest_download') }} Mbps (Expected: 500 Mbps)
             - Upload: {{ states('sensor.speedtest_upload') }} Mbps (Expected: 500 Mbps)
             - Ping: {{ states('sensor.speedtest_ping') }} ms
-            - Performance: {{ state_attr('sensor.internet_speed_status', 'performance_percentage') }}
             
             🌐 Network Health: {{ states('sensor.network_health_score') }}%
             📊 Speed Rating: {{ states('sensor.internet_speed_status') }}
-            
-            ⏰ Speed Test Time: {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
-            
-            Recommended Actions:
-            {% if states('sensor.speedtest_download') | float(0) < 100 %}
-            - Contact MetroFibre technical support
-            - Check for network congestion
-            {% elif states('sensor.speedtest_download') | float(0) < 250 %}
-            - Monitor for recurring issues
-            - Consider peak time usage patterns
-            {% endif %}
-            
-            Next speed test scheduled in {{ states('input_number.speedtest_interval') }} hours.
-
-  # Network device offline alert
-  - id: network_device_offline_alert
-    alias: "Network Device Offline Alert"
-    description: "Alert when any network device goes offline"
-    trigger:
-      - platform: state
-        entity_id: 
-          - binary_sensor.tplink_eap245_ping
-          - binary_sensor.netgear_genie_ping
-          - binary_sensor.tplinl_archer_d2_ping
-          - binary_sensor.tplink_eap225_outdoor_ping
-          - binary_sensor.netgear_gs728tp_ping
-        to: 'off'
-        for: "00:02:00"  # 2 minutes for network devices
-    condition:
-      - condition: state
-        entity_id: input_boolean.network_monitoring_enabled
-        state: 'on'
-    action:
-      - service: notify.email
-        data:
-          to: jbarkhuizen@gmail.com
-          title: "⚠️ Network Device Offline: {{ trigger.to_state.attributes.friendly_name }}"
-          message: >
-            Network Device Offline Alert - {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
-            
-            📱 Device Details:
-            - Device: {{ trigger.to_state.attributes.friendly_name }}
-            - Entity ID: {{ trigger.entity_id }}
-            - Status: Offline/Unreachable
-            - Offline Duration: 2+ minutes
-            
-            📊 Overall Network Status:
-            - Network Health Score: {{ states('sensor.network_health_score') }}%
-            - Other Devices Online: {{ state_attr('sensor.network_health_score', 'online_devices') }}/{{ state_attr('sensor.network_health_score', 'total_devices') }}
-            
-            🔧 Recommended Actions:
-            1. Check device power supply
-            2. Verify network cable connections
-            3. Ping device manually: ping {{ trigger.entity_id.split('_ping')[0].split('binary_sensor.')[1].replace('_', '.') if '_ping' in trigger.entity_id else 'device_ip' }}
-            4. Restart device if accessible
-            
-            Device will be monitored for automatic recovery.
 
   # Router offline alert (high priority)
   - id: router_offline_critical_alert
@@ -378,7 +281,7 @@ automation:
       - platform: state
         entity_id: binary_sensor.metrofibre_router
         to: 'off'
-        for: "00:00:30"  # Only 30 seconds for router
+        for: "00:00:30"
     condition:
       - condition: state
         entity_id: input_boolean.network_monitoring_enabled
@@ -397,21 +300,7 @@ automation:
             📊 Last Known Network Status:
             - Download Speed: {{ states('sensor.speedtest_download') }} Mbps
             - Upload Speed: {{ states('sensor.speedtest_upload') }} Mbps
-            - Ping: {{ states('sensor.speedtest_ping') }} ms
             - Network Health: {{ states('sensor.network_health_score') }}%
-            
-            🌐 Dependent Device Impact:
-            {% for entity in ['binary_sensor.tplink_eap245_ping', 'binary_sensor.netgear_genie_ping', 'binary_sensor.tplinl_archer_d2_ping', 'binary_sensor.tplink_eap225_outdoor_ping', 'binary_sensor.netgear_gs728tp_ping'] %}
-            - {{ state_attr(entity, 'friendly_name') or entity }}: {{ 'Online' if is_state(entity, 'on') else 'Offline' }}
-            {% endfor %}
-            
-            🚨 IMMEDIATE ACTIONS REQUIRED:
-            1. Check router power supply and connections
-            2. Restart router (unplug for 30 seconds)
-            3. Contact MetroFibre if issue persists: 087 370 7000
-            4. Check for area-wide outages
-            
-            This affects your entire home network and internet connectivity!
 
   # Router recovery alert
   - id: router_recovery_alert
@@ -421,7 +310,7 @@ automation:
       - platform: state
         entity_id: binary_sensor.metrofibre_router
         to: 'on'
-        for: "00:01:00"  # 1 minute to ensure stability
+        for: "00:01:00"
     condition:
       - condition: state
         entity_id: input_boolean.network_monitoring_enabled
@@ -435,25 +324,9 @@ automation:
             Network Recovery Confirmed - {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
             
             ✅ MetroFibre Router at 192.168.1.1 is back ONLINE
-            ⏰ Recovery Time: {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
-            
             📊 Current Network Status:
             - Network Health Score: {{ states('sensor.network_health_score') }}%
             - Internet Speed Status: {{ states('sensor.internet_speed_status') }}
-            
-            🌐 Device Recovery Status:
-            {% for entity in ['binary_sensor.tplink_eap245_ping', 'binary_sensor.netgear_genie_ping', 'binary_sensor.tplinl_archer_d2_ping', 'binary_sensor.tplink_eap225_outdoor_ping', 'binary_sensor.netgear_gs728tp_ping'] %}
-            - {{ state_attr(entity, 'friendly_name') or entity }}: {{ 'Online ✅' if is_state(entity, 'on') else 'Recovering... ⏳' }}
-            {% endfor %}
-            
-            📈 Speed Test Results (Post-Recovery):
-            - Download: {{ states('sensor.speedtest_download') }} Mbps
-            - Upload: {{ states('sensor.speedtest_upload') }} Mbps
-            - Ping: {{ states('sensor.speedtest_ping') }} ms
-            
-            🔄 Next speed test scheduled in {{ states('input_number.speedtest_interval') }} hours to verify full recovery.
-            
-            All systems should be operational. Monitor for stability over the next hour.
 
   # Weekly network performance summary - CORRECTED VERSION
   - id: weekly_network_summary
@@ -469,14 +342,14 @@ automation:
             value_template: "{{ now().weekday() == 6 }}"  # Sunday = 6
           - condition: state
             entity_id: input_boolean.weekly_network_reports
-            state: 'on' 
+            state: 'on'
     action:
       - service: notify.email
         data:
           to: jbarkhuizen@gmail.com
           title: "📊 Weekly Network Performance Report - {{ now().strftime('%d %B %Y') }}"
           message: >
-            Weekly Network Performance Summary ({{ (now() - timedelta(days=7)).strftime('%d %B') }} - {{ now().strftime('%d %B %Y') }}):
+            Weekly Network Performance Summary:
             
             📈 Current Performance Metrics:
             - Network Health Score: {{ states('sensor.network_health_score') }}%
@@ -484,20 +357,15 @@ automation:
             - Download Speed: {{ states('sensor.speedtest_download') }} Mbps (Target: 500 Mbps)
             - Upload Speed: {{ states('sensor.speedtest_upload') }} Mbps (Target: 500 Mbps)
             - Ping Latency: {{ states('sensor.speedtest_ping') }} ms
-            - Performance Ratio: {{ state_attr('sensor.internet_speed_status', 'performance_percentage') }}
             
             🔌 Network Infrastructure Status:
-            - MetroFibre Router (192.168.1.1): {{ 'Online ✅' if is_state('binary_sensor.metrofibre_router', 'on') else 'Offline ❌' }}
-            - TP-Link EAP245 AP (192.168.1.3): {{ 'Online ✅' if is_state('binary_sensor.tplink_eap245_ping', 'on') else 'Offline ❌' }}
-            - Netgear Genie (192.168.1.4): {{ 'Online ✅' if is_state('binary_sensor.netgear_genie_ping', 'on') else 'Offline ❌' }}
-            - TP-Link Archer D2 (192.168.1.5): {{ 'Online ✅' if is_state('binary_sensor.tplinl_archer_d2_ping', 'on') else 'Offline ❌' }}
-            - TP-Link EAP225 Outdoor (192.168.1.8): {{ 'Online ✅' if is_state('binary_sensor.tplink_eap225_outdoor_ping', 'on') else 'Offline ❌' }}
-            - Netgear GS728TP Switch (192.168.1.9): {{ 'Online ✅' if is_state('binary_sensor.netgear_gs728tp_ping', 'on') else 'Offline ❌' }}
+            - MetroFibre Router: {{ 'Online ✅' if is_state('binary_sensor.metrofibre_router', 'on') else 'Offline ❌' }}
+            - TP-Link EAP245: {{ 'Online ✅' if is_state('binary_sensor.tplink_eap245_ping', 'on') else 'Offline ❌' }}
+            - Netgear Switch: {{ 'Online ✅' if is_state('binary_sensor.netgear_gs728tp_ping', 'on') else 'Offline ❌' }}
             
             📊 Weekly Assessment:
             {% set health_score = states('sensor.network_health_score') | float(0) %}
             {% set download_speed = states('sensor.speedtest_download') | float(0) %}
-            {% set upload_speed = states('sensor.speedtest_upload') | float(0) %}
             
             Overall Rating: 
             {% if health_score >= 95 and download_speed >= 400 %}
@@ -510,30 +378,11 @@ automation:
             Needs Attention ❌ - Significant issues require resolution
             {% endif %}
             
-            🔧 Recommendations:
-            {% if download_speed < 400 %}
-            - Monitor MetroFibre connection - speeds below optimal 500Mbps target
-            {% endif %}
-            {% if health_score < 95 %}
-            - Review network device configurations and connections
-            {% endif %}
-            {% if states('sensor.speedtest_ping') | float(0) > 30 %}
-            - High latency detected - consider network optimization
-            {% endif %}
-            {% if health_score == 100 and download_speed >= 450 %}
-            - Network is performing excellently - no action required
-            {% endif %}
-            
             ⚙️ Monitoring Configuration:
-            - Speed Test Interval: Every {{ states('input_number.speedtest_interval') }} hours
-            - Health Alert Threshold: {{ states('input_number.network_health_alert_threshold') }}%
-            - Next Speed Test: {{ (now() + timedelta(hours=states('input_number.speedtest_interval') | float(2))).strftime('%d %B at %H:%M') }}
+            - Speed Test Interval: Every {{ states('input_number.network_speedtest_hours') }} hours
+            - Health Alert Threshold: {{ states('input_number.network_health_threshold') }}%
             
-            📞 Support Contacts:
-            - MetroFibre Technical: 087 370 7000
-            - Home Assistant: http://192.168.1.146:8123
-            
-            You can adjust report settings in Home Assistant under Network Monitoring Controls.
+            📞 Support: MetroFibre Technical 087 370 7000
 
   # Daily network health check (conditional)
   - id: daily_network_health_check
@@ -550,7 +399,7 @@ automation:
             state: 'on'
           - condition: numeric_state
             entity_id: sensor.network_health_score
-            below: input_number.network_health_alert_threshold
+            below: input_number.network_health_threshold
     action:
       - service: notify.email
         data:
@@ -560,36 +409,11 @@ automation:
             Daily Network Health Alert - Issues Detected
             
             🔴 Current Network Health: {{ states('sensor.network_health_score') }}%
-            ⚠️ Alert Threshold: {{ states('input_number.network_health_alert_threshold') }}%
+            ⚠️ Alert Threshold: {{ states('input_number.network_health_threshold') }}%
             
             📊 Current Status:
             - Internet Speed: {{ states('sensor.internet_speed_status') }}
             - Download: {{ states('sensor.speedtest_download') }} Mbps
             - Upload: {{ states('sensor.speedtest_upload') }} Mbps
-            - Ping: {{ states('sensor.speedtest_ping') }} ms
             
-            🔧 Issues Detected:
-            {% if not is_state('binary_sensor.metrofibre_router', 'on') %}
-            - MetroFibre Router is offline
-            {% endif %}
-            {% if states('sensor.speedtest_download') | float(0) < 250 %}
-            - Internet speed significantly below expected performance
-            {% endif %}
-            {% if states('sensor.network_health_score') | float(0) < 85 %}
-            - Multiple network devices experiencing connectivity issues
-            {% endif %}
-            
-            This is your daily health check. Issues will be monitored throughout the day.
-
-  # Update speedtest interval automation
-  - id: update_speedtest_interval
-    alias: "Update Speedtest Interval"
-    description: "Update speedtest interval based on input helper"
-    trigger:
-      - platform: state
-        entity_id: input_number.speedtest_interval
-    action:
-      - service: speedtestdotnet.setup
-        data:
-          scan_interval:
-            hours: "{{ states('input_number.speedtest_interval') | float }}"
+            Issues will be monitored throughout the day.

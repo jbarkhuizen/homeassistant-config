@@ -210,6 +210,9 @@
 #---------------------------------------------------------------------------------------
 # Setting SOnoff & Tuya Sensors to report every 10 min instead of every 5 sec
 # Added by Claude.ai on 5 Aug 2025
+#---------------------------------------------------------------------------------------
+# Setting SOnoff & Tuya Sensors to report every 10 min instead of every 5 sec
+# Added by Claude.ai on 5 Aug 2025
 - id: tuya_battery_power_saving
   alias: "Tuya Battery Power Saving Mode"
   trigger:

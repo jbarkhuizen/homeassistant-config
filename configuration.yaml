@@ -50,17 +50,6 @@ homeassistant:
 #       hours: 12
 #     sampling_size: 144
 #------------------------------------------------------------------------------------------------------------------------------------------------  
-# Speedtest Integration Settings
-# Input Helpers for Configuration
-# Added by Claude.AI on 30 July 2025
-input_number:
-  speedtest_interval:
-    name: "Speedtest Interval (hours)"
-    min: 0.5
-    max: 24
-    step: 0.5
-    initial: 1
-    icon: mdi:speedometer
 #------------------------------------------------------------------------------------------------------------------------------------------------      
 logger:
   default: info

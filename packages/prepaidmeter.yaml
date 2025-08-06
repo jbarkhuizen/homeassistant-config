@@ -1,3 +1,5 @@
+# Added from the https://smarthomeintegrations.co.za/about-page/
+# https://github.com/tomatensaus/DeyeSolarDesktop/blob/main/packages/prepaidmeter.yaml
 template:
   - sensor:
       - name: "Prepaid units left"

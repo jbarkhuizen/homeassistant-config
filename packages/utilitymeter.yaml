@@ -1,18 +1,19 @@
 #----------------------------------------------------------------------------------------------------------------------
 # Utility Meters for Energy Tracking - USING EXISTING EFERGY SENSORS
 # Updated by Claude.ai on 05 August 2025 - Uses existing Efergy energy sensors
+# Commented out on correction of the Sunsynk info on 6 aug 2025 @ 08h12
 #----------------------------------------------------------------------------------------------------------------------
-utility_meter:
-  # Below Sensors is applicable to the Sunsynk Inverters
-  master_energy_battery_charge_grid:
-    name: deyeinvertermaster_summary_day_battery_charge_grid
-    source: sensor.deyeinvertermaster_summary_total_battery_charge_grid
-    cycle: daily
-
-  slave_energy_battery_charge_grid:
-    name: deyeinverterslave_summary_day_battery_charge_grid
-    source: sensor.deyeinverterslave_summary_total_battery_charge_grid
-    cycle: daily
+#utility_meter:
+# Below Sensors is applicable to the Sunsynk Inverters
+#  master_energy_battery_charge_grid:
+#    name: deyeinvertermaster_summary_day_battery_charge_grid
+#    source: sensor.deyeinvertermaster_summary_total_battery_charge_grid
+#    cycle: daily
+#
+#  slave_energy_battery_charge_grid:
+#    name: deyeinverterslave_summary_day_battery_charge_grid
+#    source: sensor.deyeinverterslave_summary_total_battery_charge_grid
+#    cycle: daily
 
 #----------------------------------------------------------------------------------------------------------------------
 # Create sensor.energy_daily as an alias to existing Efergy sensor

@@ -1,14 +1,14 @@
 sensor:
 # Below Sensors is applicable to the Sunsynk Inverters
-  - platform: integration
-    name: deyeinvertermaster_summary_total_battery_charge_grid
-    source: sensor.deyeinvertermaster_battery_charge_grid_power
-    method: left
-
-  - platform: integration
-    name: deyeinverterslave_summary_total_battery_charge_grid
-    source: sensor.deyeinverterslave_battery_charge_grid_power
-    method: left
+#  - platform: integration
+#    name: deyeinvertermaster_summary_total_battery_charge_grid
+#    source: sensor.deyeinvertermaster_battery_charge_grid_power
+#    method: left
+#
+#  - platform: integration
+#    name: deyeinverterslave_summary_total_battery_charge_grid
+#    source: sensor.deyeinverterslave_battery_charge_grid_power
+#    method: left
 #------------------------------------------------------------------------------------------------------------------------    
 #Github Integration
 #Depreciated - Integration via Services
